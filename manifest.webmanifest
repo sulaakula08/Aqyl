@@ -1,0 +1,27 @@
+{
+  "name": "AQYL — AI-репетитор для школ Казахстана",
+  "short_name": "AQYL",
+  "description": "Адаптивная платформа персонализированного обучения: находит первопричину пробела в знаниях и строит индивидуальный план подготовки. Работает офлайн.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#070a14",
+  "theme_color": "#070a14",
+  "lang": "ru",
+  "categories": ["education"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='44' fill='%23070a14'/%3E%3Cpath d='M96 36l48 120h-24l-9.6-24H81.6L72 156H48L96 36zm0 45l-10.8 27h21.6L96 81z' fill='%23f0b429'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='116' fill='%23070a14'/%3E%3Cpath d='M256 96l128 320h-64l-25.6-64H217.6L192 416h-64L256 96zm0 120l-28.8 72h57.6L256 216z' fill='%23f0b429'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

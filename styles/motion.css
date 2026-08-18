@@ -1,0 +1,228 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   AQYL — движение.
+
+   Отдельный файл, потому что у движения свои правила, и их удобнее держать
+   вместе, а не размазывать по компонентам:
+
+   • Длительность. Микро-отклик (наведение, нажатие) — 120–180 мс.
+     Появление блока — 380–520 мс. Данные (полоса, кольцо, счётчик) — до 900 мс,
+     потому что там анимируется смысл, а не поверхность.
+   • Кривая. Всё, что появляется, идёт по --ease-out: быстро стартует и мягко
+     садится. Всё, что исчезает, — линейно и быстро, задерживать нечего.
+   • Смещение. Не больше 10 px: страница должна оживать, а не прыгать.
+   • Никаких бесконечных циклов, кроме индикатора «печатает».
+
+   Всё это выключается через prefers-reduced-motion в конце файла.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─── Появление при прокрутке ───────────────────────────────────────────── */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 0.5s var(--ease-out) var(--d, 0ms),
+    transform 0.5s var(--ease-out) var(--d, 0ms);
+}
+[data-reveal].in { opacity: 1; transform: none; }
+
+/* Внутри уже открытого экрана приложения ждать прокрутки незачем —
+   там всё видно сразу, и задержка читалась бы как подвисание. */
+.page [data-reveal] { transition-duration: 0.38s; }
+
+/* ─── Смена экрана ──────────────────────────────────────────────────────── */
+.page { animation: page-in 0.34s var(--ease-out) both; }
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Заголовок экрана приходит первым — он задаёт, куда смотреть. */
+.page-head { animation: page-in 0.4s var(--ease-out) both; }
+
+/* ─── Кнопки и нажатия ──────────────────────────────────────────────────── */
+.btn {
+  transition:
+    background 0.16s var(--ease), border-color 0.16s var(--ease),
+    color 0.16s var(--ease), transform 0.14s var(--ease-out),
+    box-shadow 0.16s var(--ease);
+}
+.btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-1); }
+/* Нажатие возвращает кнопку на место — тактильный отклик без «резинки». */
+.btn:active:not(:disabled) { transform: translateY(0); transition-duration: 60ms; }
+
+.btn-primary:hover:not(:disabled) { box-shadow: 0 6px 18px -10px rgba(20, 20, 15, 0.6); }
+
+.icon-btn { transition: border-color 0.15s var(--ease), background 0.15s var(--ease), transform 0.14s var(--ease-out); }
+.icon-btn:active { transform: scale(0.94); }
+
+/* Стрелка в кнопке подаётся вперёд — направление действия читается раньше текста. */
+.btn .ic { transition: transform 0.18s var(--ease-out); }
+.btn:hover .ic { transform: translateX(2px); }
+.crumb .ic { transition: transform 0.18s var(--ease-out); }
+.crumb:hover .ic { transform: translateX(-3px); }
+
+/* ─── Навигация ─────────────────────────────────────────────────────────── */
+/* Подчёркивание активного пункта разъезжается из центра. */
+.nav a.active::after { animation: rule-in 0.32s var(--ease-out) both; transform-origin: center; }
+@keyframes rule-in { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+.nav a { position: relative; }
+.nav a:not(.active)::after {
+  content: ''; position: absolute; left: 11px; right: 11px; bottom: 4px; height: 1px;
+  background: var(--rule-strong); transform: scaleX(0); transform-origin: left;
+  transition: transform 0.22s var(--ease-out);
+}
+.nav a:not(.active):hover::after { transform: scaleX(1); }
+
+.lang-switch button { transition: background 0.18s var(--ease), color 0.18s var(--ease); }
+
+/* Выдвижное меню на мобильном: съезжает из-под шапки, а не мигает. */
+@media (max-width: 860px) {
+  .nav.open { animation: drawer-in 0.26s var(--ease-out) both; }
+  .nav.open a { animation: page-in 0.3s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 35ms); }
+  .nav a:not(.active)::after { display: none; }
+}
+@keyframes drawer-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ─── Панели ────────────────────────────────────────────────────────────── */
+.panel-hover, .demo-card {
+  transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease), transform 0.2s var(--ease-out);
+}
+.panel-hover:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
+
+/* ─── Задания ───────────────────────────────────────────────────────────── */
+.option { transition: border-color 0.14s var(--ease), background 0.14s var(--ease), transform 0.12s var(--ease-out); }
+.option:hover:not(:disabled) { transform: translateX(2px); }
+.option:active:not(:disabled) { transform: translateX(0) scale(0.995); }
+.option .key { transition: background 0.16s var(--ease), color 0.16s var(--ease), border-color 0.16s var(--ease); }
+
+/* Верный ответ подсвечивается один раз — без ликования на пол-экрана. */
+.option.ok { animation: pop-ok 0.42s var(--ease-out) both; }
+@keyframes pop-ok {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.012); }
+  100% { transform: scale(1); }
+}
+/* Неверный — короткое покачивание. Амплитуда 3 px: сигнал, а не наказание. */
+.option.bad { animation: nudge 0.34s var(--ease) both; }
+@keyframes nudge {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-3px); }
+  60%      { transform: translateX(3px); }
+}
+
+.quiz-progress i { transition: background 0.3s var(--ease), border-color 0.3s var(--ease), transform 0.3s var(--ease-out); }
+.quiz-progress i.now { transform: scaleY(1.6); }
+
+.feedback, .hint-box { animation: page-in 0.3s var(--ease-out) both; }
+.feedback .fb-mark { animation: mark-in 0.4s var(--ease-out) 0.06s both; }
+@keyframes mark-in {
+  from { opacity: 0; transform: scale(0.6) rotate(-12deg); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ─── Данные ────────────────────────────────────────────────────────────── */
+/* Полоса растёт слева направо — направление совпадает со смыслом «прогресс». */
+.bar > i { transition: width 0.62s var(--ease-out); }
+.ring .val { transition: stroke-dashoffset 0.85s var(--ease-out); }
+
+.pill { transition: background 0.16s var(--ease), border-color 0.16s var(--ease), color 0.16s var(--ease); }
+a.pill:hover { border-color: var(--rule-strong); transform: translateY(-1px); }
+a.pill { transition: transform 0.16s var(--ease-out), border-color 0.16s var(--ease); }
+
+.why-tag { transition: background 0.16s var(--ease), color 0.16s var(--ease); }
+
+/* ─── Тепловая карта ────────────────────────────────────────────────────── */
+.heat td.cell-in { animation: cell-in 0.34s var(--ease-out) var(--d, 0ms) both; }
+@keyframes cell-in {
+  from { opacity: 0; transform: scale(0.72); }
+  to   { opacity: 1; transform: none; }
+}
+.heat td.cell { transition: outline-color 0.12s var(--ease), transform 0.12s var(--ease-out); }
+.heat td.cell:hover { transform: scale(1.18); position: relative; z-index: 2; }
+
+.spark i { transition: background 0.2s var(--ease); }
+.risk-row:hover .spark i:not(.zero) { background: var(--accent); }
+
+/* ─── Граф знаний ───────────────────────────────────────────────────────── */
+.gnode-in { animation: node-in 0.36s var(--ease-out) var(--d, 0ms) both; }
+@keyframes node-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.gnode circle { transition: r 0.25s var(--ease-out), opacity 0.2s var(--ease); }
+.gnode:hover circle:not(.hit) { opacity: 0.95; }
+.gnode text { transition: fill 0.18s var(--ease); }
+.gnode, .gedge { transition: opacity 0.25s var(--ease); }
+
+/* Подсвеченный путь к первопричине «течёт» вниз по рёбрам — один проход,
+   ровно чтобы показать направление обхода, и остановка. */
+.gedge.hl { animation: flow 0.7s var(--ease-out) both; }
+@keyframes flow {
+  from { stroke-dasharray: 6 6; stroke-dashoffset: 24; }
+  to   { stroke-dasharray: 6 6; stroke-dashoffset: 0; }
+}
+
+/* ─── Чат ───────────────────────────────────────────────────────────────── */
+.msg { animation: msg-in 0.32s var(--ease-out) both; }
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+.msg.me { transform-origin: bottom right; }
+.msg.bot { transform-origin: bottom left; }
+
+.choice { transition: background 0.15s var(--ease), border-color 0.15s var(--ease), color 0.15s var(--ease), transform 0.14s var(--ease-out); }
+.choice:hover { transform: translateY(-1px); }
+.choice:active { transform: translateY(0); }
+
+/* ─── Раскрывающиеся блоки ──────────────────────────────────────────────── */
+.faq summary { transition: color 0.16s var(--ease); }
+.faq summary::after { transition: transform 0.22s var(--ease-out), color 0.16s var(--ease); }
+.faq details[open] summary::after { transform: rotate(180deg); }
+.faq details[open] > p { animation: page-in 0.32s var(--ease-out) both; }
+
+/* ─── Модальное окно ────────────────────────────────────────────────────── */
+.sheet-card { animation: sheet-in 0.3s var(--ease-out) both; }
+@keyframes sheet-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ─── Ссылки и подписи ──────────────────────────────────────────────────── */
+.link, .footer a { transition: color 0.16s var(--ease), border-color 0.16s var(--ease); }
+
+/* Маркер прочерчивается один раз при загрузке — с задержкой, чтобы сначала
+   прочиталась строка, а потом подчеркнулось главное слово. */
+.hero h1 u::before {
+  transform-origin: left center;
+  animation: marker 0.55s var(--ease-out) 0.35s both;
+}
+@keyframes marker {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+.net-flag i { transition: background 0.3s var(--ease); }
+/* Пульс только когда сеть пропала: индикатор должен привлекать внимание
+   именно в этот момент, а в норме молчать. */
+.net-flag.off i { animation: pulse 2s var(--ease) infinite; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
+/* ─── Полное отключение ─────────────────────────────────────────────────────
+   Не «покороче», а именно ноль: у части учеников движение вызывает тошноту
+   и мигрень, и «быстрая» анимация им не помогает. Значения при этом
+   выставлены сразу — интерфейс полностью рабочий. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  [data-reveal] { opacity: 1 !important; transform: none !important; }
+}

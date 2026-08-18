@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AQYL — AI-репетитор для каждой школы Казахстана</title>
+  <meta name="description" content="AQYL находит настоящую причину пробела в знаниях школьника, строит персональный план подготовки и работает без интернета. Хакатон Future Minds 2026, трек Social Impact.">
+  <meta name="theme-color" content="#faf8f4">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2314140f'/%3E%3Cpath d='M16 7l7.5 18h-3.9l-1.5-3.8h-4.2L12.4 25H8.5L16 7zm0 6.9l-1.5 4.2h3L16 13.9z' fill='%23e3ab41'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/app.css">
+  <link rel="stylesheet" href="styles/motion.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Перейти к содержимому</a>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="#/" aria-label="AQYL — на главную">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="6" fill="var(--text)"/>
+          <path d="M16 7l7.5 18h-3.9l-1.5-3.8h-4.2L12.4 25H8.5L16 7zm0 6.9l-1.5 4.2h3L16 13.9z" fill="var(--accent-bright)"/>
+        </svg>
+        <b>AQYL</b>
+        <span aria-hidden="true">ақыл</span>
+      </a>
+
+      <span class="topbar-sep" aria-hidden="true"></span>
+      <nav class="nav" id="nav" aria-label="Основная навигация"></nav>
+
+      <div class="topbar-end">
+        <div class="lang-switch" id="langSwitch" role="group" aria-label="Язык интерфейса"></div>
+        <button class="icon-btn" id="themeBtn" title="Светлая / тёмная тема" aria-label="Переключить тему">
+          <svg class="ic" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="7.5"/><path d="M12 4.5a7.5 7.5 0 0 0 0 15z" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
+        <span id="navEnd"></span>
+        <button class="icon-btn burger" id="burger" aria-label="Меню" aria-expanded="false">
+          <svg class="ic" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main"></main>
+
+  <footer class="footer">
+    <div class="wrap">
+      <div class="footer-grid">
+        <div>
+          <div class="brand" style="margin-bottom:12px">
+            <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+              <rect width="32" height="32" rx="6" fill="var(--text)"/>
+              <path d="M16 7l7.5 18h-3.9l-1.5-3.8h-4.2L12.4 25H8.5L16 7zm0 6.9l-1.5 4.2h3L16 13.9z" fill="var(--accent-bright)"/>
+            </svg>
+            <b>AQYL</b>
+          </div>
+          <p style="font-size:.88rem;max-width:38ch">Адаптивная платформа персонализированного обучения для школьников Казахстана. Бесплатна для учеников — всегда.</p>
+          <p style="font-size:.8rem;margin-top:12px;color:var(--text-faint)">Прототип на демо-данных. Ничего не покидает ваш браузер.</p>
+        </div>
+
+        <div>
+          <h4>Продукт</h4>
+          <ul>
+            <li><a href="#/onboarding">Пройти диагностику</a></li>
+            <li><a href="#/graph">Карта знаний</a></li>
+            <li><a href="#/plan">План подготовки</a></li>
+            <li><a href="#/tutor">AI-репетитор</a></li>
+            <li><a href="#/teacher">Панель учителя</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4>Проект</h4>
+          <ul>
+            <li><a href="#/method">Как работает ИИ</a></li>
+            <li><a href="pitch/index.html">Питч-дек</a></li>
+            <li><a href="README.md">Техническое описание</a></li>
+            <li><a href="#/" data-act="reset">Сбросить прогресс</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-base">
+        <span>Future Minds Hackathon 2026 · трек Social Impact · Астана</span>
+        <span class="net-flag" id="netFlag"><i></i> online</span>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

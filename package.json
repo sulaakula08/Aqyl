@@ -1,0 +1,12 @@
+{
+  "name": "aqyl",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AQYL — адаптивная AI-платформа персонализированного обучения для школ Казахстана. Future Minds Hackathon 2026, трек Social Impact.",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["edtech", "kazakhstan", "adaptive-learning", "knowledge-graph", "pwa", "offline-first"],
+  "license": "MIT"
+}

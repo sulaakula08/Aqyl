@@ -1,0 +1,114 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   AQYL — дизайн-токены.
+
+   Направление: печатное, редакционное. Бумага, чернила и одна акцентная
+   краска — степное золото. Никаких градиентных заливок и стеклянных
+   поверхностей: продукт для школы должен читаться как учебник, а не как
+   очередная SaaS-панель.
+
+   Цвета данных (пробел / в процессе / уверенно / освоено) используются
+   ТОЛЬКО в графиках и индикаторах освоения — никогда для украшения.
+   ───────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Бумага */
+  --bg: #faf8f4;
+  --bg-soft: #ffffff;
+  --bg-sunk: #f2efe8;
+  --surface: #ffffff;
+  --surface-2: #f4f1ea;
+
+  /* Линии — тонкие, как в типографике */
+  --rule: #ded8cc;
+  --rule-strong: #c3bbaa;
+
+  /* Чернила */
+  --text: #14140f;
+  --text-dim: #58554b;
+  --text-faint: #8e8878;
+
+  /* Акцент — степное золото. Он один. */
+  --accent: #a86a00;
+  --accent-bright: #d9931a;
+  --accent-wash: #fdf3e0;
+
+  /* Семантика освоения — только для данных */
+  --band-gap: #b23a48;
+  --band-developing: #b07d10;
+  --band-strong: #1c7a8c;
+  --band-mastered: #2f7d51;
+  --band-gap-wash: #fbeceb;
+  --band-developing-wash: #fbf3df;
+  --band-strong-wash: #e7f4f6;
+  --band-mastered-wash: #e8f4ec;
+
+  /* Геометрия — сдержанная, почти прямые углы */
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 12px;
+
+  /* Тени многослойные: один размытый прямоугольник читается как наклейка,
+     а связка «контактная тень + мягкий ореол» — как лист над столом. */
+  --shadow-1: 0 1px 1px rgba(20, 20, 15, 0.04), 0 2px 6px -2px rgba(20, 20, 15, 0.06);
+  --shadow-2: 0 1px 1px rgba(20, 20, 15, 0.04), 0 12px 28px -14px rgba(20, 20, 15, 0.22), 0 28px 60px -40px rgba(20, 20, 15, 0.4);
+
+  /* Разлиновка фона — как у тетрадного листа, на пределе различимости. */
+  --paper-line: rgba(20, 20, 15, 0.028);
+  --hero-glow: rgba(217, 147, 26, 0.13);
+
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI Semibold', 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Mono', 'JetBrains Mono', Consolas, 'Courier New', monospace;
+
+  --maxw: 1200px;
+  --gutter: 28px;
+}
+
+/* Тёмная тема — вечерние занятия и слабое освещение.
+   Не «инверсия», а отдельно подобранная пара: тёплый уголь вместо чёрного,
+   чтобы текст не выжигал глаза при долгом чтении. */
+[data-theme='dark'] {
+  --bg: #14140f;
+  --bg-soft: #1c1c16;
+  --bg-sunk: #101009;
+  --surface: #1c1c16;
+  --surface-2: #26261e;
+
+  --rule: #35342a;
+  --rule-strong: #4c4a3c;
+
+  --text: #f4f1e8;
+  --text-dim: #b3ae9d;
+  --text-faint: #837e6f;
+
+  --accent: #e3ab41;
+  --accent-bright: #f2c260;
+  --accent-wash: #2a2317;
+
+  --band-gap: #e0808c;
+  --band-developing: #dcae4a;
+  --band-strong: #5bbccd;
+  --band-mastered: #6cc292;
+  --band-gap-wash: #2e1c1e;
+  --band-developing-wash: #2c2415;
+  --band-strong-wash: #14262b;
+  --band-mastered-wash: #16281e;
+
+  --shadow-1: 0 1px 1px rgba(0, 0, 0, 0.4), 0 2px 6px -2px rgba(0, 0, 0, 0.5);
+  --shadow-2: 0 1px 1px rgba(0, 0, 0, 0.4), 0 12px 28px -14px rgba(0, 0, 0, 0.6), 0 28px 60px -40px rgba(0, 0, 0, 0.9);
+
+  --paper-line: rgba(244, 241, 232, 0.035);
+  --hero-glow: rgba(227, 171, 65, 0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

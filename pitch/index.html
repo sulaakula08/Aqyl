@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AQYL — Pitch Deck · Future Minds Hackathon 2026</title>
+<link rel="stylesheet" href="../styles/tokens.css">
+<style>
+  /* Дек намеренно живёт в одном файле и печатается в PDF (Ctrl+P → «Сохранить как PDF»,
+     формат A4 альбомный, поля «нет», фоновая графика «вкл»). */
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    font-family: var(--font); background: #04060d; color: var(--text);
+    -webkit-font-smoothing: antialiased; padding: 28px 18px 60px;
+  }
+  .deck { max-width: 1120px; margin-inline: auto; display: grid; gap: 26px; }
+  .slide {
+    position: relative; aspect-ratio: 16 / 9; padding: 52px 58px; overflow: hidden;
+    border: 1px solid var(--border); border-radius: 22px;
+    background:
+      radial-gradient(70% 90% at 88% 5%, rgba(240,180,41,.14), transparent 60%),
+      radial-gradient(60% 80% at 4% 96%, rgba(46,197,216,.14), transparent 62%),
+      #080c17;
+    display: flex; flex-direction: column;
+  }
+  .n { position: absolute; right: 30px; bottom: 22px; font-family: var(--font-mono); font-size: .72rem; color: var(--text-faint); letter-spacing: .12em; }
+  .tag { font-size: .68rem; letter-spacing: .22em; text-transform: uppercase; color: var(--gold); font-weight: 700; }
+  h1 { font-size: clamp(1.9rem, 3.6vw, 3.1rem); line-height: 1.08; letter-spacing: -.03em; margin: 14px 0 16px; font-weight: 650; }
+  h2 { font-size: clamp(1.5rem, 2.5vw, 2.1rem); line-height: 1.12; letter-spacing: -.025em; margin: 12px 0 20px; font-weight: 650; }
+  p, li { color: var(--text-dim); font-size: clamp(.86rem, 1.15vw, 1rem); line-height: 1.55; }
+  strong { color: var(--text); }
+  .em { background: linear-gradient(110deg, var(--gold-soft), var(--sky-soft)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  ul { padding-left: 0; list-style: none; display: grid; gap: 10px; }
+  ul li { padding-left: 22px; position: relative; }
+  ul li::before { content: '→'; position: absolute; left: 0; color: var(--gold); }
+  .cols { display: grid; grid-template-columns: repeat(var(--c, 3), 1fr); gap: 18px; flex: 1; align-content: center; }
+  .box { border: 1px solid var(--border); border-radius: 16px; padding: 20px; background: rgba(255,255,255,.035); }
+  .box h3 { font-size: .98rem; margin-bottom: 8px; letter-spacing: -.01em; }
+  .box p { font-size: .84rem; }
+  .big { font-size: clamp(1.7rem, 3.4vw, 2.7rem); font-weight: 700; letter-spacing: -.035em; color: var(--gold); line-height: 1.05; }
+  .sub { font-size: .78rem; color: var(--text-faint); margin-top: 6px; }
+  .fill { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .row { display: flex; gap: 14px; flex-wrap: wrap; }
+  .chip { border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px; font-size: .78rem; color: var(--text-dim); }
+  .chip.hot { border-color: rgba(240,180,41,.45); color: var(--gold); background: rgba(240,180,41,.08); }
+  table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); color: var(--text-dim); }
+  th { color: var(--text-faint); font-weight: 600; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; }
+  td strong { color: var(--text); }
+  .mark { width: 44px; height: 44px; border-radius: 13px; display: grid; place-items: center;
+          background: linear-gradient(140deg, var(--sky), var(--violet) 55%, var(--gold)); }
+  .note { font-size: .72rem; color: var(--text-faint); margin-top: auto; padding-top: 14px; }
+  .hint { max-width: 1120px; margin: 0 auto 26px; font-size: .82rem; color: var(--text-faint); }
+
+  @media print {
+    @page { size: A4 landscape; margin: 0; }
+    body { padding: 0; background: #04060d; }
+    .hint { display: none; }
+    .deck { gap: 0; max-width: none; }
+    .slide { border-radius: 0; border: 0; break-after: page; page-break-after: always; width: 100%; height: 100vh; aspect-ratio: auto; }
+  }
+</style>
+</head>
+<body>
+
+<p class="hint">12 слайдов. Для PDF: Ctrl/Cmd + P → «Сохранить как PDF», A4 альбомная, поля «нет», фоновая графика включена.</p>
+
+<div class="deck">
+
+  <!-- 1 ─ Титул -->
+  <section class="slide">
+    <div class="row" style="align-items:center;gap:14px">
+      <span class="mark">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#070a14" stroke-width="2.2" stroke-linecap="round">
+          <path d="M4 20L12 4l8 16"/><path d="M8.2 14h7.6"/>
+        </svg>
+      </span>
+      <strong style="letter-spacing:.2em;font-size:1.1rem">AQYL</strong>
+    </div>
+    <div class="fill">
+      <span class="tag">Future Minds Hackathon 2026 · Трек Social Impact</span>
+      <h1>ИИ, который находит <span class="em">причину</span> пробела,<br>а не его симптом</h1>
+      <p style="max-width:62ch">Адаптивная платформа персонализированного обучения для школьников Казахстана 7–12 классов.
+      Работает офлайн, говорит по-казахски и объясняет каждое своё решение.</p>
+    </div>
+    <div class="row">
+      <span class="chip hot">Рабочий MVP</span>
+      <span class="chip">Ноль зависимостей</span>
+      <span class="chip">Қазақша · Русский · English</span>
+      <span class="chip">PWA · офлайн</span>
+    </div>
+    <span class="n">01</span>
+  </section>
+
+  <!-- 2 ─ Проблема -->
+  <section class="slide">
+    <span class="tag">Проблема</span>
+    <h2>Место рождения до сих пор определяет<br>качество образования</h2>
+    <div class="cols" style="--c:4">
+      <div class="box"><div class="big">~85</div><div class="sub">баллов PISA — разрыв между городскими и сельскими школами РК</div></div>
+      <div class="box"><div class="big">7 из 10</div><div class="sub">семей не могут позволить репетитора по 2–3 предметам</div></div>
+      <div class="box"><div class="big">25+</div><div class="sub">учеников на одного учителя: индивидуальная диагностика физически невозможна</div></div>
+      <div class="box"><div class="big">3,7 млн</div><div class="sub">школьников — и единая программа для всех уровней подготовки</div></div>
+    </div>
+    <p class="note">Оценки на основе публичных данных Бюро национальной статистики РК и отчётов OECD PISA; точные значения приводятся в приложении к питчу.</p>
+    <span class="n">02</span>
+  </section>
+
+  <!-- 3 ─ Инсайт -->
+  <section class="slide">
+    <span class="tag">Инсайт</span>
+    <h2>Ученик проваливает не ту тему,<br>которую ему дают решать заново</h2>
+    <div class="fill">
+      <p style="max-width:70ch;font-size:1.02rem">Школьник не справляется с квадратными уравнениями. Обычная платформа даёт ему ещё десять квадратных уравнений
+      и фиксирует падение мотивации. Настоящая причина на два уровня ниже — <strong>потеря знака при раскрытии скобок</strong>.</p>
+      <p style="max-width:70ch;margin-top:16px">Пока система не умеет спускаться по цепочке зависимостей между темами, она лечит симптом.
+      Именно эту цепочку мы сделали ядром продукта, а не надстройкой.</p>
+    </div>
+    <span class="n">03</span>
+  </section>
+
+  <!-- 4 ─ Решение -->
+  <section class="slide">
+    <span class="tag">Решение</span>
+    <h2>AQYL — граф знаний плюс объяснимая модель освоения</h2>
+    <div class="cols" style="--c:4">
+      <div class="box"><h3>Диагностика за 8 вопросов</h3><p>Адаптивный тест выбирает вопрос там, где ответ несёт максимум информации об ученике.</p></div>
+      <div class="box"><h3>Поиск первопричины</h3><p>Обход графа предпосылок вниз: система называет тему, с которой действительно нужно начать.</p></div>
+      <div class="box"><h3>Персональный маршрут</h3><p>Топологическая сортировка графа, разложенная по неделям до даты экзамена.</p></div>
+      <div class="box"><h3>Сократовский репетитор</h3><p>Не выдаёт ответ: ведёт по лестнице подсказок до самостоятельного решения.</p></div>
+    </div>
+    <span class="n">04</span>
+  </section>
+
+  <!-- 5 ─ Как работает ИИ -->
+  <section class="slide">
+    <span class="tag">Как работает ИИ</span>
+    <h2>Три модели, каждую из которых можно проверить</h2>
+    <div class="cols" style="--c:3">
+      <div class="box">
+        <h3>Bayesian Knowledge Tracing</h3>
+        <p>P(тема освоена) обновляется по Байесу после каждой попытки с учётом вероятности угадать (0,22) и ошибиться по невнимательности (0,10). Даёт число, которое видит и ученик, и учитель.</p>
+      </div>
+      <div class="box">
+        <h3>Elo-рейтинг + IRT</h3>
+        <p>Способность ученика θ и сложность задания b живут в одной шкале. Задание подбирается там, где предсказанная вероятность успеха ≈ 70 % — зона ближайшего развития по Выготскому.</p>
+      </div>
+      <div class="box">
+        <h3>Вывод по графу</h3>
+        <p>Для непройденных тем оценка не выдумывается: априор из θ и b, потолок по слабейшей предпосылке, пол по освоенным следствиям. Каждый вывод трассируется до данных.</p>
+      </div>
+    </div>
+    <p class="note">Никакого «чёрного ящика»: рядом с каждой рекомендацией в интерфейсе показаны факторы и их веса. Опционально подключается Claude API — тот же контекст уходит в облако одним промптом.</p>
+    <span class="n">05</span>
+  </section>
+
+  <!-- 6 ─ Продукт -->
+  <section class="slide">
+    <span class="tag">Продукт</span>
+    <h2>Путь ученика — от «не понимаю» до плана на 8 недель</h2>
+    <div class="cols" style="--c:3">
+      <div class="box"><h3>1 · Профиль и диагностика</h3><p>Класс, предметы, цель, дата экзамена. Восемь адаптивных вопросов — и карта освоения по всем темам программы.</p></div>
+      <div class="box"><h3>2 · Кабинет и карта знаний</h3><p>Прогресс, слабые места, маршрут восстановления и интерактивный граф: видно, что от чего зависит и что заблокировано.</p></div>
+      <div class="box"><h3>3 · Практика с разбором</h3><p>Задание в зоне ближайшего развития, три ступени подсказок, разбор ошибки с названием типичного заблуждения, озвучка текста.</p></div>
+      <div class="box"><h3>4 · Индивидуальный план</h3><p>Недельный роадмап под дату экзамена с честным ответом: успеваешь или нужно N часов в неделю вместо текущих.</p></div>
+      <div class="box"><h3>5 · Панель учителя</h3><p>Тепловая карта класса 20 × 11, ученики в зоне риска, приоритет тем по эффекту вмешательства, добавление своих модулей.</p></div>
+      <div class="box"><h3>6 · Геймификация и доступность</h3><p>Опыт, серии дней, достижения. Три языка, светлая тема для проекторов, синтез речи, mobile-first.</p></div>
+    </div>
+    <span class="n">06</span>
+  </section>
+
+  <!-- 7 ─ Отличие -->
+  <section class="slide">
+    <span class="tag">Отличие</span>
+    <h2>Чем это не похоже на существующие платформы</h2>
+    <div class="fill">
+      <table>
+        <thead><tr><th>Критерий</th><th>Типичная EdTech-платформа</th><th>AQYL</th></tr></thead>
+        <tbody>
+          <tr><td>Диагноз</td><td>«40 % по теме»</td><td><strong>Называет причину на 2 уровня ниже</strong></td></tr>
+          <tr><td>Рекомендации</td><td>Чёрный ящик</td><td><strong>Факторы и веса видны ученику и учителю</strong></td></tr>
+          <tr><td>Связь без интернета</td><td>Не работает</td><td><strong>Полный офлайн после первой загрузки</strong></td></tr>
+          <tr><td>Казахский язык</td><td>Перевод интерфейса</td><td><strong>Задания, подсказки и разборы на казахском</strong></td></tr>
+          <tr><td>Репетитор</td><td>Выдаёт готовый ответ</td><td><strong>Метод Сократа: ведёт вопросами</strong></td></tr>
+          <tr><td>Учитель</td><td>Видит итоговый балл</td><td><strong>Видит общий пробел класса за 5 секунд</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <span class="n">07</span>
+  </section>
+
+  <!-- 8 ─ Стек -->
+  <section class="slide">
+    <span class="tag">Технологический стек</span>
+    <h2>Ноль зависимостей — потому что это требование, а не эстетика</h2>
+    <div class="cols" style="--c:3">
+      <div class="box"><h3>Фронтенд</h3><p>Ванильный JavaScript (ES-модули), CSS с дизайн-токенами, хеш-роутер. Без сборки и без фреймворка: приложение открывается на школьном ноутбуке и слабом канале.</p></div>
+      <div class="box"><h3>Данные и ИИ</h3><p>Учебный граф и банк заданий в модулях JS, состояние в localStorage по схеме будущей БД. Модели BKT / Elo / IRT и вывод по графу — собственный код без библиотек, каталог <code>src/engine</code>.</p></div>
+      <div class="box"><h3>Офлайн и деплой</h3><p>Service worker (network-first с откатом в кэш), PWA-манифест. Разворачивается на Vercel / Netlify / GitHub Pages без CI. Опционально — Claude API из браузера.</p></div>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <span class="chip">HTML / CSS / JS</span><span class="chip">PWA + Service Worker</span>
+      <span class="chip">localStorage → Supabase</span><span class="chip">Claude API (опция)</span>
+      <span class="chip">Web Speech API</span>
+    </div>
+    <span class="n">08</span>
+  </section>
+
+  <!-- 9 ─ Бизнес-модель -->
+  <section class="slide">
+    <span class="tag">Бизнес-модель</span>
+    <h2>Бесплатно для ученика, платно для системы образования</h2>
+    <div class="cols" style="--c:3">
+      <div class="box"><h3>B2C Free</h3><p>Полный доступ ученику навсегда. Это не маркетинг, а условие социального эффекта: платный доступ отсекает ровно ту аудиторию, ради которой продукт создан.</p></div>
+      <div class="box"><h3>B2B School — 250 ₸ / ученик / мес.</h3><p>Панель учителя, аналитика класса и школы, свои модули, выгрузка отчётов для завуча.</p></div>
+      <div class="box"><h3>B2G / НПО</h3><p>Разворачивание на регион, интеграция с Kundelik, отчётность по разрыву город/село для управлений образования и донорских программ.</p></div>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <span class="chip">TAM 3,7 млн школьников РК</span>
+      <span class="chip">SAM ~1,1 млн (7–12 классы, мат. и физ.)</span>
+      <span class="chip hot">SOM 3 года: 60 000 учеников / 300 школ</span>
+    </div>
+    <p class="note">Себестоимость обслуживания одного ученика близка к нулю: расчёты идут на его устройстве, серверу остаётся только синхронизация.</p>
+    <span class="n">09</span>
+  </section>
+
+  <!-- 10 ─ Социальный эффект -->
+  <section class="slide">
+    <span class="tag">Социальный эффект</span>
+    <h2>Что мы измеряем, чтобы не обманывать себя</h2>
+    <div class="cols" style="--c:4">
+      <div class="box"><h3>Закрытые пробелы</h3><p>Доля тем, перешедших из «пробела» в «освоено», на ученика за четверть.</p></div>
+      <div class="box"><h3>Разрыв село / город</h3><p>Разница среднего θ между сельскими и городскими школами внутри платформы.</p></div>
+      <div class="box"><h3>Удержание</h3><p>Доля учеников с ≥ 3 активными днями в неделю через 8 недель после старта.</p></div>
+      <div class="box"><h3>Время учителя</h3><p>Часы, сэкономленные на ручной диагностике класса, по опросу учителей.</p></div>
+    </div>
+    <p class="note">Пилот: 3 школы Туркестанской области, 1 четверть, контрольная группа. Успех = сокращение разрыва по θ и рост доли закрытых пробелов относительно контроля.</p>
+    <span class="n">10</span>
+  </section>
+
+  <!-- 11 ─ Дорожная карта -->
+  <section class="slide">
+    <span class="tag">Дорожная карта</span>
+    <h2>Что уже работает и что дальше</h2>
+    <div class="cols" style="--c:3">
+      <div class="box">
+        <h3>Сделано (MVP)</h3>
+        <p>14 тем графа, 42 задания с разборами на двух языках, адаптивная диагностика, BKT + Elo + вывод по графу, кабинет, конструктор плана, панель учителя, офлайн-режим, три языка, озвучка.</p>
+      </div>
+      <div class="box">
+        <h3>3 месяца</h3>
+        <p>Supabase и синхронизация между устройствами, полный охват 7–11 классов по математике, банк заданий ЕНТ, распознавание фото рукописного решения, telegram-напоминания.</p>
+      </div>
+      <div class="box">
+        <h3>12 месяцев</h3>
+        <p>Химия и биология, генерация заданий под конкретный пробел, интеграция с Kundelik, пилот на область, обучение модели на собственных данных прохождения.</p>
+      </div>
+    </div>
+    <p class="note">Что в MVP является демо-данными: класс из 20 учеников для панели учителя сгенерирован детерминированным PRNG; всё остальное — реальные вычисления на реальных ответах пользователя.</p>
+    <span class="n">11</span>
+  </section>
+
+  <!-- 12 ─ Команда и финал -->
+  <section class="slide">
+    <span class="tag">Команда и запрос</span>
+    <h2 style="margin-bottom:14px">Как ИИ может дать качественное образование<br>независимо от того, где живёт ученик</h2>
+    <div class="fill">
+      <p style="max-width:66ch;font-size:1.02rem">Ответ AQYL: перенести самое дорогое, что даёт репетитор — <strong>точный диагноз и персональную последовательность</strong> —
+      в модель, которая стоит ноль за ученика и работает там, где нет ни репетиторов, ни устойчивого интернета.</p>
+      <div class="row" style="margin-top:26px">
+        <span class="chip hot">Демо: живая ссылка + видео 3 мин</span>
+        <span class="chip">Код: публичный репозиторий</span>
+        <span class="chip">Запрос: пилот в 3 школах региона</span>
+      </div>
+    </div>
+    <p class="note">Команда: [имена и роли участников] · Future Minds Hackathon 2026 · трек Social Impact</p>
+    <span class="n">12</span>
+  </section>
+
+</div>
+</body>
+</html>
