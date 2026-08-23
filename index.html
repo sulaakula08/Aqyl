@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>AQYL — AI-репетитор для каждой школы Казахстана</title>
-  <meta name="description" content="AQYL находит настоящую причину пробела в знаниях школьника, строит персональный план подготовки и работает без интернета. Хакатон Future Minds 2026, трек Social Impact.">
+  <title data-i18n="app.title">AQYL — AI-репетитор для каждой школы Казахстана</title>
+  <meta name="description" data-i18n-content="app.desc" content="AQYL находит настоящую причину пробела в знаниях школьника, строит персональный план подготовки и работает без интернета. Хакатон Future Minds 2026, трек Social Impact.">
   <meta name="theme-color" content="#faf8f4">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2314140f'/%3E%3Cpath d='M16 7l7.5 18h-3.9l-1.5-3.8h-4.2L12.4 25H8.5L16 7zm0 6.9l-1.5 4.2h3L16 13.9z' fill='%23e3ab41'/%3E%3C/svg%3E">
@@ -13,11 +13,11 @@
   <link rel="stylesheet" href="styles/motion.css">
 </head>
 <body>
-  <a class="skip-link" href="#main">Перейти к содержимому</a>
+  <a class="skip-link" href="#main" data-i18n="app.skip">Перейти к содержимому</a>
 
   <header class="topbar">
     <div class="wrap topbar-inner">
-      <a class="brand" href="#/" aria-label="AQYL — на главную">
+      <a class="brand" href="#/" data-i18n-aria="app.brandHome" aria-label="AQYL — на главную">
         <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
           <rect width="32" height="32" rx="6" fill="var(--text)"/>
           <path d="M16 7l7.5 18h-3.9l-1.5-3.8h-4.2L12.4 25H8.5L16 7zm0 6.9l-1.5 4.2h3L16 13.9z" fill="var(--accent-bright)"/>
@@ -27,17 +27,17 @@
       </a>
 
       <span class="topbar-sep" aria-hidden="true"></span>
-      <nav class="nav" id="nav" aria-label="Основная навигация"></nav>
+      <nav class="nav" id="nav" data-i18n-aria="app.navMain" aria-label="Основная навигация"></nav>
 
       <div class="topbar-end">
-        <div class="lang-switch" id="langSwitch" role="group" aria-label="Язык интерфейса"></div>
-        <button class="icon-btn" id="themeBtn" title="Светлая / тёмная тема" aria-label="Переключить тему">
+        <div class="lang-switch" id="langSwitch" role="group" data-i18n-aria="app.langLabel" aria-label="Язык интерфейса"></div>
+        <button class="icon-btn" id="themeBtn" data-i18n-title="app.themeTitle" data-i18n-aria="app.themeToggle" title="Светлая / тёмная тема" aria-label="Переключить тему">
           <svg class="ic" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="7.5"/><path d="M12 4.5a7.5 7.5 0 0 0 0 15z" fill="currentColor" stroke="none"/>
           </svg>
         </button>
         <span id="navEnd"></span>
-        <button class="icon-btn burger" id="burger" aria-label="Меню" aria-expanded="false">
+        <button class="icon-btn burger" id="burger" data-i18n-aria="app.menu" aria-label="Меню" aria-expanded="false">
           <svg class="ic" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
             <path d="M4 7h16M4 12h16M4 17h16"/>
           </svg>
@@ -59,34 +59,34 @@
             </svg>
             <b>AQYL</b>
           </div>
-          <p style="font-size:.88rem;max-width:38ch">Адаптивная платформа персонализированного обучения для школьников Казахстана. Бесплатна для учеников — всегда.</p>
-          <p style="font-size:.8rem;margin-top:12px;color:var(--text-faint)">Прототип на демо-данных. Ничего не покидает ваш браузер.</p>
+          <p style="font-size:.88rem;max-width:38ch" data-i18n="app.tagline">Адаптивная платформа персонализированного обучения для школьников Казахстана. Бесплатна для учеников — всегда.</p>
+          <p style="font-size:.8rem;margin-top:12px;color:var(--text-faint)" data-i18n="app.proto">Прототип на демо-данных. Ничего не покидает ваш браузер.</p>
         </div>
 
         <div>
-          <h4>Продукт</h4>
+          <h4 data-i18n="app.footProduct">Продукт</h4>
           <ul>
-            <li><a href="#/onboarding">Пройти диагностику</a></li>
-            <li><a href="#/graph">Карта знаний</a></li>
-            <li><a href="#/plan">План подготовки</a></li>
-            <li><a href="#/tutor">AI-репетитор</a></li>
-            <li><a href="#/teacher">Панель учителя</a></li>
+            <li><a href="#/onboarding" data-i18n="cta.diagnostic">Пройти диагностику</a></li>
+            <li><a href="#/graph" data-i18n="nav.graph">Карта знаний</a></li>
+            <li><a href="#/plan" data-i18n="plan.title">План подготовки</a></li>
+            <li><a href="#/tutor" data-i18n="tutor.title">AI-репетитор</a></li>
+            <li><a href="#/teacher" data-i18n="teacher.title">Панель учителя</a></li>
           </ul>
         </div>
 
         <div>
-          <h4>Проект</h4>
+          <h4 data-i18n="app.footProject">Проект</h4>
           <ul>
-            <li><a href="#/method">Как работает ИИ</a></li>
-            <li><a href="pitch/index.html">Питч-дек</a></li>
-            <li><a href="README.md">Техническое описание</a></li>
-            <li><a href="#/" data-act="reset">Сбросить прогресс</a></li>
+            <li><a href="#/method" data-i18n="app.methodNav">Как работает ИИ</a></li>
+            <li><a href="pitch/index.html" data-i18n="app.footPitch">Питч-дек</a></li>
+            <li><a href="README.md" data-i18n="app.footReadme">Техническое описание</a></li>
+            <li><a href="#/" data-act="reset" data-i18n="common.reset">Сбросить прогресс</a></li>
           </ul>
         </div>
       </div>
 
       <div class="footer-base">
-        <span>Future Minds Hackathon 2026 · трек Social Impact · Астана</span>
+        <span data-i18n="app.hack">Future Minds Hackathon 2026 · трек Social Impact · Астана</span>
         <span class="net-flag" id="netFlag"><i></i> online</span>
       </div>
     </div>

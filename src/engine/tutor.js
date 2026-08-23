@@ -167,8 +167,9 @@ const pick = (lang, map) => map[lang] || map.ru;
  */
 export async function answerWithClaude(text, profile, ctx, lang, apiKey) {
   const hits = retrieve(text, lang);
+  const L = (obj) => (obj && (obj[lang] || obj.ru)) || '';
   const context = hits
-    .map((h) => `- ${h.topic.ru} (${h.topic.grade} кл., освоено ${Math.round(masteryOf(profile, h.topic.id) * 100)}%): ${h.topic.summary?.ru}`)
+    .map((h) => `- ${L(h.topic)} (grade ${h.topic.grade}, mastery ${Math.round(masteryOf(profile, h.topic.id) * 100)}%): ${L(h.topic.summary)}`)
     .join('\n');
 
   const system = `Ты — школьный репетитор AQYL для учеников Казахстана (7–12 класс).
@@ -181,7 +182,7 @@ export async function answerWithClaude(text, profile, ctx, lang, apiKey) {
 Карта знаний ученика:
 ${context || '(релевантных тем не найдено)'}
 Класс: ${profile.grade}. Цель: ${profile.goal}. Уровень (theta): ${(profile.theta ?? 0).toFixed(2)}.
-${ctx.item ? `Ученик сейчас решает задание: "${ctx.item.stem.ru}"` : ''}`;
+${ctx.item ? `Ученик сейчас решает задание: "${L(ctx.item.stem)}"` : ''}`;
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -203,7 +204,9 @@ ${ctx.item ? `Ученик сейчас решает задание: "${ctx.item
   return {
     socratic: false,
     text: data.content?.map((c) => c.text).join('') || '',
-    chips: hits[0] ? [{ label: 'Практиковать', action: `learn:${hits[0].topic.id}` }] : [],
+    chips: hits[0]
+      ? [{ label: pick(lang, { ru: 'Практиковать', kk: 'Жаттығу', en: 'Practice' }), action: `learn:${hits[0].topic.id}` }]
+      : [],
     refs: hits.map((h) => h.topic.id),
   };
 }

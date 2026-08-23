@@ -1,6 +1,6 @@
 import { html, raw, action } from './dom.js';
 import { icon, iconGlyph } from './icons.js';
-import { t, loc } from '../i18n.js';
+import { t, tf, loc, plt } from '../i18n.js';
 import { getProfile } from '../state.js';
 import { masteryOf, causeChain, readinessOf } from '../engine/recommender.js';
 import { masteryBand } from '../engine/mastery.js';
@@ -140,21 +140,21 @@ export function renderGraph() {
     <div class="page-head">
       <div>
         <span class="label label-accent">${t('graph.title')}</span>
-        <h1 style="font-size:2rem;margin-top:14px">Что от чего зависит</h1>
-        <p style="margin-top:6px;max-width:62ch">${t('graph.sub')} Размер узла — уровень освоения, цвет — статус. Это не украшение: именно по этим рёбрам движок ищет первопричину пробела.</p>
+        <h1 style="font-size:2rem;margin-top:14px">${t('graph.h1')}</h1>
+        <p style="margin-top:6px;max-width:62ch">${t('graph.sub')} ${t('graph.sub2')}</p>
       </div>
     </div>
 
     <div class="grid g4" style="margin-bottom:18px">
-      <div class="panel panel-tight"><div class="metric"><b>${String(topics.length)}</b><span>тем в графе</span></div></div>
-      <div class="panel panel-tight"><div class="metric"><b>${String(edgeCount)}</b><span>связей «нужно раньше»</span></div></div>
-      <div class="panel panel-tight"><div class="metric"><b>${String(open)}</b><span>тем открыто</span></div></div>
-      <div class="panel panel-tight"><div class="metric"><b style="color:${blocked ? 'var(--band-gap)' : 'var(--text)'}">${String(blocked)}</b><span>заблокировано базой</span></div></div>
+      <div class="panel panel-tight"><div class="metric"><b>${String(topics.length)}</b><span>${t('graph.mTopics')}</span></div></div>
+      <div class="panel panel-tight"><div class="metric"><b>${String(edgeCount)}</b><span>${t('graph.mEdges')}</span></div></div>
+      <div class="panel panel-tight"><div class="metric"><b>${String(open)}</b><span>${t('graph.mOpen')}</span></div></div>
+      <div class="panel panel-tight"><div class="metric"><b style="color:${blocked ? 'var(--band-gap)' : 'var(--text)'}">${String(blocked)}</b><span>${t('graph.mBlocked')}</span></div></div>
     </div>
 
     <div class="graph-shell">
       <svg viewBox="0 0 ${String(Math.round(width))} ${String(Math.round(height))}"
-           preserveAspectRatio="xMidYMid meet" role="img" aria-label="Граф знаний">
+           preserveAspectRatio="xMidYMid meet" role="img" aria-label="${t('graph.aria')}">
         ${raw(edges)}
         ${raw(nodes)}
       </svg>
@@ -165,59 +165,50 @@ export function renderGraph() {
       <span><i style="background:var(--band-developing)"></i>${t('band.developing')}</span>
       <span><i style="background:var(--band-strong)"></i>${t('band.strong')}</span>
       <span><i style="background:var(--band-mastered)"></i>${t('band.mastered')}</span>
-      <span class="legend-lock">${raw(icon('lock'))} не хватает базы</span>
+      <span class="legend-lock">${raw(icon('lock'))} ${t('graph.legendLock')}</span>
     </div>
 
     ${raw(sel ? nodePanel(p, sel) : `
       <div class="panel" style="margin-top:20px">
-        <p>Нажми на любой узел, чтобы увидеть путь к нему и текущий уровень освоения.</p>
+        <p>${t('graph.hint')}</p>
       </div>`)}
 
     <section class="section" style="padding-bottom:0">
       <div class="section-head">
         <span class="section-num">01</span>
-        <h2>Как читать эту карту</h2>
+        <h2>${t('graph.readH')}</h2>
         <p>
-          Граф — не иллюстрация к продукту, а его структура данных. Всё, что показано ниже,
-          движок вычисляет на этих же рёбрах: рекомендации, план подготовки и приоритет темы для учителя.
+          ${t('graph.readP')}
         </p>
       </div>
 
       <div class="steps">
         <article>
-          <span class="step-num">Слева направо</span>
-          <h3>Порядок изучения</h3>
+          <span class="step-num">${t('graph.r1n')}</span>
+          <h3>${t('graph.r1h')}</h3>
           <p>
-            Столбец узла — длина самого длинного пути к нему от темы без предпосылок.
-            Поэтому предпосылка всегда левее следствия, и картинка читается как учебная траектория,
-            а не как случайное облако точек. Глубина этого графа — ${String(longestChain)} ${longestChain % 10 === 1 && longestChain !== 11 ? 'уровень' : longestChain % 10 >= 2 && longestChain % 10 <= 4 && (longestChain < 12 || longestChain > 14) ? 'уровня' : 'уровней'}.
+            ${tf('graph.r1b', { n: longestChain, w: plt(longestChain, 'pl.level') })}
           </p>
         </article>
         <article>
-          <span class="step-num">Размер</span>
-          <h3>Уровень освоения</h3>
+          <span class="step-num">${t('graph.r2n')}</span>
+          <h3>${t('graph.r2h')}</h3>
           <p>
-            Радиус растёт вместе с P(освоено) — вероятностью, что вы владеете темой прямо сейчас.
-            Оценка падает со временем, если тему давно не трогали, поэтому маленький узел
-            может означать не «не учил», а «забыл».
+            ${t('graph.r2b')}
           </p>
         </article>
         <article>
-          <span class="step-num">Цвет</span>
-          <h3>Статус, а не оценка</h3>
+          <span class="step-num">${t('graph.r3n')}</span>
+          <h3>${t('graph.r3h')}</h3>
           <p>
-            Четыре полосы вместо балла: пробел, в процессе, уверенно, освоено.
-            Балл «68 %» ничего не говорит о том, что делать дальше; полоса говорит —
-            и совпадает с цветами в кабинете и в панели учителя.
+            ${t('graph.r3b')}
           </p>
         </article>
         <article>
-          <span class="step-num">Замок</span>
-          <h3>Не хватает базы</h3>
+          <span class="step-num">${t('graph.r4n')}</span>
+          <h3>${t('graph.r4h')}</h3>
           <p>
-            Тему можно открыть в любой момент — платформа ничего не запрещает.
-            Замок означает лишь, что предпосылки освоены слабее 50 %, и шанс справиться
-            низкий: разумнее сначала спуститься по стрелкам вниз.
+            ${t('graph.r4b')}
           </p>
         </article>
       </div>
@@ -226,45 +217,39 @@ export function renderGraph() {
     <section class="section">
       <div class="section-head">
         <span class="section-num">02</span>
-        <h2>Что движок делает с этим графом</h2>
-        <p>Три разные задачи решаются обходом одной и той же структуры — поэтому продукт остаётся объяснимым.</p>
+        <h2>${t('graph.useH')}</h2>
+        <p>${t('graph.useP')}</p>
       </div>
 
       <div class="grid g3">
         <div class="panel">
-          <span class="label label-accent">Поиск первопричины</span>
-          <h3 style="margin:12px 0 8px">Обход вниз по рёбрам</h3>
+          <span class="label label-accent">${t('graph.u1l')}</span>
+          <h3 style="margin:12px 0 8px">${t('graph.u1h')}</h3>
           <p style="font-size:.9rem">
-            От проваленной темы движок спускается к её предпосылкам и продолжает, пока находит
-            освоение ниже порога. Возвращается не «слабая тема», а цепочка — и её видно в рекомендациях.
+            ${t('graph.u1b')}
           </p>
-          <div class="formula">weakest(t) = argmin&nbsp;P(освоено) по prereq(t)</div>
+          <div class="formula">${raw(t('graph.u1f'))}</div>
         </div>
         <div class="panel">
-          <span class="label label-accent">Порядок в плане</span>
-          <h3 style="margin:12px 0 8px">Топологическая сортировка</h3>
+          <span class="label label-accent">${t('graph.u2l')}</span>
+          <h3 style="margin:12px 0 8px">${t('graph.u2h')}</h3>
           <p style="font-size:.9rem">
-            План подготовки — линеаризация графа: тема не может попасть в неделю раньше своей
-            предпосылки. Поэтому маршрут никогда не предлагает параболу до квадратных уравнений.
+            ${t('graph.u2b')}
           </p>
           <div class="formula">order = topo_sort(V, E), E = prereq → topic</div>
         </div>
         <div class="panel">
-          <span class="label label-accent">Приоритет для учителя</span>
-          <h3 style="margin:12px 0 8px">Число зависимых тем</h3>
+          <span class="label label-accent">${t('graph.u3l')}</span>
+          <h3 style="margin:12px 0 8px">${t('graph.u3h')}</h3>
           <p style="font-size:.9rem">
-            Исходящая степень узла показывает, сколько тем откроется, если закрыть эту.
-            Отсюда берётся ранжирование в панели учителя: один урок на узле с высокой степенью
-            разблокирует сразу несколько последующих.
+            ${t('graph.u3b')}
           </p>
           <div class="formula">leverage(t) = (1 − avg P) × (1 + outdeg(t))</div>
         </div>
       </div>
 
       <p class="faint" style="font-size:.82rem;margin-top:18px;max-width:70ch">
-        Граф собран по программе Казахстана для 7–11 классов и хранится как обычные данные
-        (<span class="mono">src/data/curriculum.js</span>): темы, их предпосылки и задания с параметром сложности.
-        Учитель может дописать свой модуль в панели класса — движок начнёт учитывать его сразу, без переобучения.
+        ${raw(tf('graph.dataNote', { file: '<span class="mono">src/data/curriculum.js</span>' }))}
       </p>
     </section>
   </div>`;
@@ -282,18 +267,18 @@ function nodePanel(p, tp) {
       <h3>${loc(tp)}</h3>
       <span class="pill pill-${band}">${t('band.' + band)} · ${Math.round(pL * 100)}%</span>
       <span class="pill">${tp.grade} ${t('common.grade')}</span>
-      <span class="pill">готовность базы ${Math.round(ready * 100)}%</span>
+      <span class="pill">${t('graph.ready')} ${Math.round(ready * 100)}%</span>
     </div>
     <p style="font-size:.94rem">${loc(tp.summary)}</p>
     ${chain.length > 1 ? `
       <div class="chain" style="margin-top:14px">
-        <span class="faint">Путь:</span>
+        <span class="faint">${t('graph.path')}</span>
         ${chain.map((id, i) => `${i ? '<span class="arrow">→</span>' : ''}<b>${loc(TOPIC_BY_ID[id])}</b>`).join('')}
       </div>
-      <p style="font-size:.86rem;margin-top:10px">Система советует стартовать с <strong style="color:var(--accent)">${loc(TOPIC_BY_ID[chain[0]])}</strong>: без неё эта тема не удержится.</p>` : ''}
+      <p style="font-size:.86rem;margin-top:10px">${raw(tf('graph.advise', { topic: `<strong style="color:var(--accent)">${loc(TOPIC_BY_ID[chain[0]])}</strong>` }))}</p>` : ''}
     <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
       <a class="btn btn-primary btn-sm" href="#/learn/${chain[0]}">${t('cta.practice')} →</a>
-      <a class="btn btn-ghost btn-sm" href="#/tutor?q=${encodeURIComponent(loc(tp))}">Спросить репетитора</a>
+      <a class="btn btn-ghost btn-sm" href="#/tutor?q=${encodeURIComponent(loc(tp))}">${t('graph.askTutor')}</a>
     </div>
   </div>`;
 }

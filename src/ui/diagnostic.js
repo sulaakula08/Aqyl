@@ -1,6 +1,6 @@
 import { html, raw, action } from './dom.js';
 import { icon } from './icons.js';
-import { t, loc, lang } from '../i18n.js';
+import { t, tf, loc, lang } from '../i18n.js';
 import { getProfile, update, recordAttempt } from '../state.js';
 import { pickDiagnosticItem, masteryOf, rootCause, hasEvidence } from '../engine/recommender.js';
 import { masteryBand } from '../engine/mastery.js';
@@ -51,7 +51,7 @@ export function renderDiagnostic() {
         </div>
       </div>
 
-      <div class="quiz-progress" aria-label="Прогресс диагностики">
+      <div class="quiz-progress" aria-label="${t('diag.progressAria')}">
         ${raw(Array.from({ length: LENGTH }, (_, i) => {
           const r = s.results[i];
           const cls = r ? (r.correct ? 'done' : 'miss') : i === s.results.length ? 'now' : '';
@@ -92,7 +92,7 @@ export function renderDiagnostic() {
       </div>
 
       <p class="faint" style="font-size:.8rem;margin-top:16px;text-align:center">
-        Следующий вопрос выбирается так, чтобы предсказанная вероятность твоего успеха была близка к 50% — именно там ответ несёт максимум информации.
+        ${t('diag.adaptNote')}
       </p>
     </div>
   </div>`;
@@ -125,28 +125,25 @@ function renderResult() {
   return html`
   <div class="page wrap">
     <div class="quiz">
-      <span class="label label-accent">Диагностика завершена</span>
+      <span class="label label-accent">${t('diag.done')}</span>
       <h1 style="font-size:2rem;margin:14px 0 10px">${t('diag.result')}</h1>
-      <p>За ${String(session?.results.length ?? LENGTH)} вопросов система оценила твой уровень и построила карту освоения по всем темам, включая те, которые ты не проходил — это возможно благодаря связям в графе знаний.</p>
+      <p>${tf('diag.doneP', { n: session?.results.length ?? LENGTH })}</p>
 
       <div class="grid g3" style="margin:26px 0">
         <div class="panel center"><div class="metric" style="align-items:center"><b class="mono">θ ${p.theta >= 0 ? '+' : ''}${p.theta.toFixed(2)}</b><span>${t('dash.level')}</span></div></div>
-        <div class="panel center"><div class="metric" style="align-items:center"><b>${String(correct)}/${String(session?.results.length ?? LENGTH)}</b><span>верных ответов</span></div></div>
+        <div class="panel center"><div class="metric" style="align-items:center"><b>${String(correct)}/${String(session?.results.length ?? LENGTH)}</b><span>${t('diag.correctAnswers')}</span></div></div>
         <div class="panel center"><div class="metric" style="align-items:center"><b>${String(p.xp)}</b><span>${t('dash.xp')}</span></div></div>
       </div>
 
       ${raw(root && weakest ? `
         <div class="panel panel-accent" style="margin-bottom:22px">
-          <span class="label label-accent">Главный вывод</span>
-          <h3 style="margin:14px 0 8px">Начинать нужно не с того, что кажется сложным</h3>
-          <p style="font-size:.95rem">Самая слабая тема — <strong style="color:var(--text)">${loc(weakest.topic)}</strong> (${Math.round(weakest.pL * 100)}%).
+          <span class="label label-accent">${t('diag.verdict')}</span>
+          <h3 style="margin:14px 0 8px">${t('diag.verdictH')}</h3>
+          <p style="font-size:.95rem">${t('diag.weakest')} <strong style="color:var(--text)">${loc(weakest.topic)}</strong> (${Math.round(weakest.pL * 100)}%).
           ${root !== weakest.topic.id
-            ? `Но её причина глубже: сначала нужно закрыть <strong style="color:var(--accent)">${loc(TOPIC_BY_ID[root])}</strong>. Двигаться сверху бесполезно — база не держит.${
-                hasEvidence(p, root) ? '' : ' Прямых ответов по этой теме пока нет — вывод сделан по графу связей, первый же блок заданий его подтвердит или опровергнет.'}`
-            : weakest.topic.prereq.length
-              ? 'База под ней в порядке — значит, проблема именно в самой теме, и начинать нужно прямо с неё.'
-              : 'Это фундаментальная тема без предпосылок — от неё зависят остальные, поэтому начинаем прямо с неё.'}</p>
-          <a class="btn btn-primary btn-sm" style="margin-top:16px" href="#/learn/${root}">Начать с этой темы →</a>
+            ? tf('diag.deeper', { root: loc(TOPIC_BY_ID[root]) }) + (hasEvidence(p, root) ? '' : t('diag.noEvidence'))
+            : weakest.topic.prereq.length ? t('diag.baseOk') : t('diag.fundamental')}</p>
+          <a class="btn btn-primary btn-sm" style="margin-top:16px" href="#/learn/${root}">${t('diag.startHere')}</a>
         </div>` : '')}
 
       <div class="panel">
@@ -155,7 +152,7 @@ function renderResult() {
           ${raw(touched.map((x) => `
             <div>
               <div style="display:flex;justify-content:space-between;gap:12px;font-size:.88rem;margin-bottom:6px">
-                <span>${loc(x.topic)} ${x.attempts === 0 ? '<span class="faint" style="font-size:.78rem">· оценка по графу</span>' : ''}</span>
+                <span>${loc(x.topic)} ${x.attempts === 0 ? `<span class="faint" style="font-size:.78rem">${t('diag.fromGraph')}</span>` : ''}</span>
                 <span class="mono faint">${Math.round(x.pL * 100)}%</span>
               </div>
               <div class="bar bar-${masteryBand(x.pL)}"><i style="width:${(x.pL * 100).toFixed(0)}%"></i></div>
@@ -164,7 +161,7 @@ function renderResult() {
       </div>
 
       <div style="display:flex;gap:10px;margin-top:24px;flex-wrap:wrap">
-        <a class="btn btn-primary" href="#/dashboard">Перейти в кабинет →</a>
+        <a class="btn btn-primary" href="#/dashboard">${t('diag.toDash')}</a>
         <a class="btn btn-ghost" href="#/plan">${t('plan.title')}</a>
         <a class="btn btn-ghost" href="#/graph">${t('graph.title')}</a>
       </div>

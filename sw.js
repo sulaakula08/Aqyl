@@ -7,7 +7,7 @@
  * интернет бывает нестабильным или почасовым.
  */
 
-const CACHE = 'aqyl-v4';
+const CACHE = 'aqyl-v5';
 
 const ASSETS = [
   './',
@@ -19,6 +19,9 @@ const ASSETS = [
   'src/main.js',
   'src/state.js',
   'src/i18n.js',
+  'src/i18n/ru.js',
+  'src/i18n/kk.js',
+  'src/i18n/en.js',
   'src/ui/dom.js',
   'src/ui/icons.js',
   'src/ui/motion.js',

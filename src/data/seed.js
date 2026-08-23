@@ -16,7 +16,7 @@ const NAMES = [
   'Бекзат Е.', 'Инжу П.', 'Мирас В.', 'Ділдә Ш.', 'Алишер Ж.',
 ];
 
-const REGIONS = ['Туркестанская область', 'Астана', 'Кызылординская область', 'Актюбинская область'];
+const REGIONS = ['reg.turkestan', 'reg.astana', 'reg.kyzylorda', 'reg.aktobe'];
 
 /** Детерминированный генератор (mulberry32). */
 function rng(seed) {
@@ -67,8 +67,9 @@ export function seedClass() {
 
   return {
     id: 'k9b',
-    name: '9 «Б» класс',
-    school: 'Средняя школа №12, Туркестанская область',
+    // Ключи, а не строки: демо-класс тоже должен говорить на языке интерфейса.
+    nameKey: 'klass.name',
+    schoolKey: 'klass.school',
     teacher: 'Гүлнара Әбдіқызы',
     students,
     customModules: [],

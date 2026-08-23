@@ -1,6 +1,6 @@
 import { html, raw, action } from './dom.js';
 import { icon } from './icons.js';
-import { t, loc } from '../i18n.js';
+import { t, tf, loc, plt } from '../i18n.js';
 import { getProfile, update } from '../state.js';
 import { buildRoadmap, daysUntil } from '../engine/planner.js';
 import { masteryBand } from '../engine/mastery.js';
@@ -27,18 +27,17 @@ export function renderPlan() {
     <div class="page-head">
       <div>
         <span class="label label-accent">${t('plan.title')}</span>
-        <h1 style="font-size:2rem;margin-top:14px">Маршрут до цели</h1>
+        <h1 style="font-size:2rem;margin-top:14px">${t('plan.h1')}</h1>
         <p style="margin-top:6px;max-width:64ch">
-          Темы расставлены топологической сортировкой графа знаний: предпосылка всегда идёт раньше следствия.
-          Часы на тему зависят от твоего текущего уровня и её сложности — план пересчитывается после каждого решённого задания.
+          ${t('plan.lead')}
         </p>
       </div>
     </div>
 
     <div class="grid g4" style="margin-bottom:20px">
-      <div class="panel"><div class="metric"><b>${loc(goal)}</b><span>цель</span></div></div>
-      <div class="panel"><div class="metric"><b>${String(plan.totalHours)} ч</b><span>объём работы</span></div></div>
-      <div class="panel"><div class="metric"><b>${String(plan.weeksNeeded)}</b><span>недель при ${String(weeklyHours)} ч/нед</span></div></div>
+      <div class="panel"><div class="metric"><b>${loc(goal)}</b><span>${t('plan.mGoal')}</span></div></div>
+      <div class="panel"><div class="metric"><b>${String(plan.totalHours)} ${t('plan.hours')}</b><span>${t('plan.mVolume')}</span></div></div>
+      <div class="panel"><div class="metric"><b>${String(plan.weeksNeeded)}</b><span>${tf('plan.mWeeks', { h: weeklyHours })}</span></div></div>
       <div class="panel"><div class="metric">
         <b style="color:${days === null ? 'var(--text)' : plan.onTrack ? 'var(--band-mastered)' : 'var(--band-gap)'}">
           ${days === null ? '—' : days + ' ' + t('dash.days')}
@@ -54,30 +53,30 @@ export function renderPlan() {
         </h3>
         <p style="font-size:.94rem">
           ${plan.onTrack
-            ? `При ${weeklyHours} ч в неделю ты закроешь программу за ${plan.weeksNeeded} нед., а до экзамена ${plan.weeksAvailable} нед. Запас — ${Math.max(0, plan.weeksAvailable - plan.weeksNeeded)} нед. на повторение.`
-            : `Чтобы успеть за ${plan.weeksAvailable} нед., нужно заниматься <strong style="color:var(--accent)">${plan.requiredWeeklyHours} ч в неделю</strong> вместо ${weeklyHours}. Либо сузить цель до приоритетных тем.`}
+            ? tf('plan.ok', { h: weeklyHours, need: plan.weeksNeeded, avail: plan.weeksAvailable, slack: Math.max(0, plan.weeksAvailable - plan.weeksNeeded) })
+            : tf('plan.tight', { avail: plan.weeksAvailable, req: plan.requiredWeeklyHours, h: weeklyHours })}
         </p>
       </div>` : `
       <div class="panel" style="margin-bottom:20px">
-        <p>Укажи дату экзамена в профиле — и план автоматически уложится в оставшееся время, а система скажет, успеваешь ли ты.</p>
-        <a class="btn btn-sm" style="margin-top:12px" href="#/onboarding">Указать дату</a>
+        <p>${t('plan.noDate')}</p>
+        <a class="btn btn-sm" style="margin-top:12px" href="#/onboarding">${t('plan.setDate')}</a>
       </div>`)}
 
     <div class="panel" style="margin-bottom:20px">
       <label style="font-size:.79rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--text-faint)">
-        Сколько часов в неделю ты готов заниматься
+        ${t('plan.hoursQ')}
       </label>
       <div class="choice-row" style="margin-top:12px">
         ${raw([2, 3, 5, 8, 12].map((h) => `
-          <button class="choice ${weeklyHours === h ? 'on' : ''}" data-act="plan-hours" data-h="${h}">${h} ч</button>`).join(''))}
+          <button class="choice ${weeklyHours === h ? 'on' : ''}" data-act="plan-hours" data-h="${h}">${h} ${t('plan.hours')}</button>`).join(''))}
       </div>
     </div>
 
     <section class="panel">
-      <h3 style="margin-bottom:6px">Недельный маршрут</h3>
+      <h3 style="margin-bottom:6px">${t('plan.weekly')}</h3>
       <p style="font-size:.86rem;margin-bottom:10px">
-        ${String(plan.weeks.length)} ${plural(plan.weeks.length, 'неделя', 'недели', 'недель')} ·
-        ${String(plan.totalHours)} ${plural(plan.totalHours, 'час', 'часа', 'часов')}
+        ${String(plan.weeks.length)} ${plt(plan.weeks.length, 'pl.week')} ·
+        ${String(plan.totalHours)} ${plt(plan.totalHours, 'pl.hour')}
       </p>
       ${raw(plan.weeks.length ? plan.weeks.map((w, i) => `
         <div class="week">
@@ -93,12 +92,12 @@ export function renderPlan() {
                 </a>`).join('')}
             </div>
           </div>
-        </div>`).join('') : '<p>Все темы твоего уровня освоены выше 85%. Можно переходить к олимпиадным задачам или темам следующего класса.</p>')}
+        </div>`).join('') : `<p>${t('plan.allDone')}</p>`)}
     </section>
 
     <div style="display:flex;gap:10px;margin-top:22px;flex-wrap:wrap">
       <a class="btn btn-primary" href="#/dashboard">${t('nav.dashboard')} →</a>
-      <button class="btn btn-ghost" data-act="plan-print">Распечатать план</button>
+      <button class="btn btn-ghost" data-act="plan-print">${t('plan.print')}</button>
     </div>
   </div>`;
 }

@@ -1,4 +1,5 @@
 import { html, raw } from './dom.js';
+import { t, tf } from '../i18n.js';
 import { getProfile } from '../state.js';
 import { BKT } from '../engine/mastery.js';
 import { successChance } from '../engine/recommender.js';
@@ -11,6 +12,9 @@ import { successChance } from '../engine/recommender.js';
  * жюри спрашивает про архитектуру моделей: здесь всё выложено с формулами
  * и живыми числами текущего пользователя.
  */
+
+/** Символ в моноширинном начертании — подставляется в переводимые строки. */
+const mono = (s) => `<span class="mono">${s}</span>`;
 
 function bktTable() {
   // Показываем, как одна и та же попытка двигает оценку с разных стартовых точек.
@@ -30,151 +34,120 @@ function bktTable() {
     </tr>`).join('');
 }
 
+const LIMITS = ['lim1', 'lim2', 'lim3'];
+
 export function renderMethod() {
   const p = getProfile();
   const theta = p.theta ?? 0;
+  const params = { g: mono('g = ' + BKT.p_guess), s: mono('s = ' + BKT.p_slip), tau: mono('τ = ' + BKT.p_transit) };
 
   return html`
   <div class="page wrap">
     <div class="page-head">
       <div>
-        <span class="label label-accent">Методика</span>
-        <h1 style="margin-top:12px">Как устроен ИИ в AQYL</h1>
-        <p>Ни одна оценка в этом продукте не появляется из ниоткуда. Ниже — все четыре механизма,
-        их формулы и живые числа вашего профиля. Если вывод системы кажется неверным, эта страница
-        позволяет проверить, где именно он разошёлся с реальностью.</p>
+        <span class="label label-accent">${t('method.kicker')}</span>
+        <h1 style="margin-top:12px">${t('method.h1')}</h1>
+        <p>${t('method.lead')}</p>
       </div>
     </div>
 
     <div class="grid g2" style="align-items:start;gap:26px">
 
       <section class="panel">
-        <span class="label label-accent">01 · Оценка освоения</span>
-        <h3 style="margin:12px 0 10px">Bayesian Knowledge Tracing</h3>
-        <p style="font-size:.93rem">Модель Корбетта и Андерсона (1995), стандарт в интеллектуальных обучающих
-        системах. Она отвечает на вопрос «какова вероятность, что ученик действительно владеет темой»,
-        и учитывает две неприятности: можно знать и ошибиться, а можно не знать и угадать.</p>
+        <span class="label label-accent">${t('method.s1label')}</span>
+        <h3 style="margin:12px 0 10px">${t('method.s1h')}</h3>
+        <p style="font-size:.93rem">${t('method.s1p')}</p>
 
-        <div class="formula">P(L | верно) = P(L)·(1−s) ⁄ [ P(L)·(1−s) + (1−P(L))·g ]</div>
-        <div class="formula">P(L′) = P(L | ответ) + (1 − P(L | ответ))·τ</div>
+        <div class="formula">${t('method.fBayes')}</div>
+        <div class="formula">${raw(t('method.fUpdate'))}</div>
 
-        <p style="font-size:.88rem">Параметры: угадывание <span class="mono">g = ${String(BKT.p_guess)}</span>,
-        ошибка по невнимательности <span class="mono">s = ${String(BKT.p_slip)}</span>,
-        переход «не знал → выучил» <span class="mono">τ = ${String(BKT.p_transit)}</span>.</p>
+        <p style="font-size:.88rem">${raw(tf('method.s1params', params))}</p>
 
         <table style="width:100%;margin-top:16px;border-collapse:collapse;font-size:.85rem">
           <thead>
             <tr>
-              <th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule)" class="label">Было</th>
-              <th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule)" class="label">Верный ответ</th>
-              <th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule)" class="label">Ошибка</th>
+              <th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule)" class="label">${t('method.thWas')}</th>
+              <th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule)" class="label">${t('method.thRight')}</th>
+              <th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule)" class="label">${t('method.thWrong')}</th>
             </tr>
           </thead>
           <tbody>${raw(bktTable())}</tbody>
         </table>
-        <p style="font-size:.82rem;margin-top:12px;color:var(--text-faint)">
-          Обратите внимание на асимметрию: один верный ответ при низкой оценке двигает её сильно,
-          а при высокой — почти нет. Так и должно быть: подтверждать известное менее информативно.
-        </p>
+        <p style="font-size:.82rem;margin-top:12px;color:var(--text-faint)">${t('method.s1note')}</p>
       </section>
 
       <section class="panel">
-        <span class="label label-accent">02 · Подбор сложности</span>
-        <h3 style="margin:12px 0 10px">Elo-рейтинг и теория тестирования</h3>
-        <p style="font-size:.93rem">Способность ученика <span class="mono">θ</span> и сложность задания
-        <span class="mono">b</span> живут в одной логит-шкале — как рейтинги в шахматах. Это позволяет
-        предсказать вероятность успеха до того, как ученик увидит задание.</p>
+        <span class="label label-accent">${t('method.s2label')}</span>
+        <h3 style="margin:12px 0 10px">${t('method.s2h')}</h3>
+        <p style="font-size:.93rem">${raw(tf('method.s2p', { theta: mono('θ'), b: mono('b') }))}</p>
 
-        <div class="formula">P(успех) = 1 ⁄ (1 + 10^((b − θ) ⁄ 1.2))</div>
-        <div class="formula">θ′ = θ + K·(результат − P(успех)),&nbsp;&nbsp; K = 0.6 ⁄ (1 + 0.06·n)</div>
+        <div class="formula">${t('method.fElo')}</div>
+        <div class="formula">${raw(t('method.fTheta'))}</div>
 
-        <p style="font-size:.88rem">K-фактор убывает с опытом: первые ответы двигают оценку заметно,
-        поздние — уточняют её. Ваше текущее значение: <span class="mono">θ = ${theta >= 0 ? '+' : ''}${theta.toFixed(2)}</span>
-        после ${String(p.attempts)} ${p.attempts === 1 ? 'попытки' : 'попыток'}.</p>
+        <p style="font-size:.88rem">${raw(tf('method.s2k', {
+          theta: mono('θ = ' + (theta >= 0 ? '+' : '') + theta.toFixed(2)),
+          n: p.attempts,
+          w: t(p.attempts === 1 ? 'method.attempt1' : 'method.attemptN'),
+        }))}</p>
 
         <div style="margin-top:16px;display:grid;gap:9px">
           ${raw([-1, 0, 0.5, 1, 1.5].map((b) => {
             const pc = Math.round(successChance(theta, b) * 100);
             return `<div class="progress-row">
-              <div class="top"><span>Задание сложности <span class="mono">b = ${b.toFixed(1)}</span></span><span class="mono">${pc}%</span></div>
+              <div class="top"><span>${t('method.taskDiff')} ${mono('b = ' + b.toFixed(1))}</span><span class="mono">${pc}%</span></div>
               <div class="bar bar-strong"><i style="width:${pc}%"></i></div>
             </div>`;
           }).join(''))}
         </div>
-        <p style="font-size:.82rem;margin-top:12px;color:var(--text-faint)">
-          В практике мы целимся в ≈ 70 % — зона ближайшего развития по Выготскому. В диагностике
-          наоборот, в ≈ 50 %: там ответ несёт максимум информации о вас.
-        </p>
+        <p style="font-size:.82rem;margin-top:12px;color:var(--text-faint)">${t('method.s2note')}</p>
       </section>
 
       <section class="panel">
-        <span class="label label-accent">03 · Граф знаний</span>
-        <h3 style="margin:12px 0 10px">Поиск первопричины и вывод по связям</h3>
-        <p style="font-size:.93rem">Ключевой механизм продукта. Темы — узлы, рёбра — отношение
-        «нельзя понять X, не владея Y». Граф решает две задачи.</p>
+        <span class="label label-accent">${t('method.s3label')}</span>
+        <h3 style="margin:12px 0 10px">${t('method.s3h')}</h3>
+        <p style="font-size:.93rem">${t('method.s3p')}</p>
 
-        <p style="font-size:.92rem;margin-top:14px"><strong style="color:var(--text)">Спуск к причине.</strong>
-        От слабой темы система идёт вниз по рёбрам. Важное ограничение: спуск происходит, только если
-        предпосылка действительно слабая <em>и не сильнее самой темы</em>. Без второго условия система
-        сваливалась бы к корню графа всегда, даже когда база в порядке. Приоритет отдаётся предпосылкам,
-        по которым есть реальные ответы ученика, а не одни предположения.</p>
+        <p style="font-size:.92rem;margin-top:14px"><strong style="color:var(--text)">${t('method.s3aT')}</strong>
+        ${raw(t('method.s3aB'))}</p>
 
-        <p style="font-size:.92rem;margin-top:12px"><strong style="color:var(--text)">Оценка непройденного.</strong>
-        Темам без единой попытки не ставится «по умолчанию 25 %». Берётся априор из
-        <span class="mono">θ</span> и <span class="mono">b</span>, затем накладываются два ограничения:</p>
-        <div class="formula">потолок: тема ≤ min(освоение предпосылок) + 0.2</div>
-        <div class="formula">пол: тема ≥ max(освоение следствий) × 0.9</div>
-        <p style="font-size:.88rem">Второе правило особенно наглядно: если ученик уверенно решает
-        квадратные уравнения, значит он владеет раскрытием скобок — иначе не решал бы. Такие оценки
-        помечены в интерфейсе как «оценка по графу» и уточняются первым же заданием.</p>
+        <p style="font-size:.92rem;margin-top:12px"><strong style="color:var(--text)">${t('method.s3bT')}</strong>
+        ${raw(tf('method.s3bB', { theta: mono('θ'), b: mono('b') }))}</p>
+        <div class="formula">${t('method.fCeil')}</div>
+        <div class="formula">${t('method.fFloor')}</div>
+        <p style="font-size:.88rem">${t('method.s3note')}</p>
       </section>
 
       <section class="panel">
-        <span class="label label-accent">04 · Репетитор</span>
-        <h3 style="margin:12px 0 10px">Сократовская политика ответа</h3>
-        <p style="font-size:.93rem">Репетитор работает в двух режимах, и оба подчиняются одному правилу:
-        готовый ответ на текущее задание не выдаётся никогда.</p>
+        <span class="label label-accent">${t('method.s4label')}</span>
+        <h3 style="margin:12px 0 10px">${t('method.s4h')}</h3>
+        <p style="font-size:.93rem">${t('method.s4p')}</p>
 
-        <p style="font-size:.92rem;margin-top:14px"><strong style="color:var(--text)">Офлайн-режим.</strong>
-        Вопрос токенизируется и ранжируется по учебному графу — частотное взвешивание с устойчивостью
-        к словоформам, так что «уравнения» и «уравнение» находят одно и то же. Дальше определяется
-        намерение (объяснить, спланировать, попросить ответ, сдаться), подтягивается карта пробелов,
-        и ответ собирается политикой. Ноль сети, ноль стоимости, задержка в миллисекундах.</p>
+        <p style="font-size:.92rem;margin-top:14px"><strong style="color:var(--text)">${t('method.s4aT')}</strong>
+        ${t('method.s4aB')}</p>
 
-        <p style="font-size:.92rem;margin-top:12px"><strong style="color:var(--text)">Облачный режим.</strong>
-        Тот же собранный контекст уходит в Claude API одним запросом с системным промптом, который
-        запрещает выдавать решение и требует отвечать на языке ученика. Ключ хранится только в
-        localStorage браузера. Если сеть или ключ недоступны — приложение молча возвращается в офлайн.</p>
+        <p style="font-size:.92rem;margin-top:12px"><strong style="color:var(--text)">${t('method.s4bT')}</strong>
+        ${t('method.s4bB')}</p>
 
         <div class="panel panel-accent panel-tight" style="margin-top:16px">
-          <span class="label">Почему так</span>
-          <p style="font-size:.9rem;margin-top:8px;color:var(--text)">Модель, которая охотно решает домашнее задание,
-          обучает ученика обращаться к модели, а не думать. Мы сознательно сделали продукт менее удобным
-          в одной точке, чтобы он был полезным в главной.</p>
+          <span class="label">${t('method.whyLabel')}</span>
+          <p style="font-size:.9rem;margin-top:8px;color:var(--text)">${t('method.whyB')}</p>
         </div>
       </section>
     </div>
 
     <section class="panel panel-sunk" style="margin-top:26px">
-      <span class="label label-accent">Честно о границах</span>
-      <h3 style="margin:12px 0 12px">Чего этот прототип пока не делает</h3>
+      <span class="label label-accent">${t('method.limLabel')}</span>
+      <h3 style="margin:12px 0 12px">${t('method.limH')}</h3>
       <div class="grid g3" style="gap:18px">
-        <p style="font-size:.9rem"><strong style="color:var(--text)">Параметры не обучены на данных.</strong>
-        Значения <span class="mono">g</span>, <span class="mono">s</span>, <span class="mono">τ</span> взяты
-        как разумные для школьной математики. На реальных логах их следует оценивать по каждой теме отдельно —
-        это первое, что мы сделаем после пилота.</p>
-        <p style="font-size:.9rem"><strong style="color:var(--text)">Граф составлен вручную.</strong>
-        14 тем и связи между ними написаны нами по программе РК. Масштабирование на все предметы требует
-        либо работы методистов, либо извлечения связей из учебников — задача следующего этапа.</p>
-        <p style="font-size:.9rem"><strong style="color:var(--text)">Класс в панели учителя — демо-данные.</strong>
-        20 учеников сгенерированы детерминированным PRNG, чтобы демонстрация была воспроизводимой.
-        Всё, что касается вашего собственного прогресса, считается по-настоящему.</p>
+        ${raw(LIMITS.map((k) => `
+          <p style="font-size:.9rem"><strong style="color:var(--text)">${t('method.' + k + 'T')}</strong>
+          ${tf('method.' + k + 'B', params)}</p>`).join(''))}
       </div>
     </section>
 
     <div class="row" style="margin-top:26px">
-      <a class="btn btn-primary" href="#/onboarding">Пройти диагностику</a>
-      <a class="btn btn-ghost" href="#/graph">Посмотреть граф знаний</a>
+      <a class="btn btn-primary" href="#/onboarding">${t('cta.diagnostic')}</a>
+      <a class="btn btn-ghost" href="#/graph">${t('method.ctaGraph')}</a>
     </div>
   </div>`;
 }

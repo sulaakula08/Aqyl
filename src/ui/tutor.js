@@ -1,20 +1,19 @@
 import { html, raw, action, md, toast } from './dom.js';
 import { icon } from './icons.js';
-import { t, loc, lang } from '../i18n.js';
+import { t, tf, loc, lang } from '../i18n.js';
 import { getProfile, getSettings, update } from '../state.js';
 import { answerLocally, answerWithClaude } from '../engine/tutor.js';
 import { getActiveItem } from './learn.js';
 import { TOPIC_BY_ID } from '../data/curriculum.js';
 
 let log = [];
+// Язык, на котором собрано приветствие: иначе оно оставалось бы на том языке,
+// который был активен при первом открытии экрана.
+let greetingLang = null;
 let busy = false;
 
-const SUGGESTIONS = [
-  'С чего начать подготовку к ЕНТ?',
-  'Объясни дискриминант',
-  'Что у меня самое слабое?',
-  'Не получается, хочу бросить',
-];
+// Ключи, а не готовые строки: подсказки должны меняться вместе с языком.
+const SUGGESTION_KEYS = ['tutor.q1', 'tutor.q2', 'tutor.q3', 'tutor.q4'];
 
 export function seedTutorQuestion(q) {
   if (q && !log.some((m) => m.text === q)) pendingQuestion = q;
@@ -24,12 +23,13 @@ let pendingQuestion = null;
 export function renderTutor() {
   const s = getSettings();
 
-  if (!log.length) {
+  if (!log.length || (log.length === 1 && greetingLang && greetingLang !== lang())) {
     log = [{
       role: 'bot',
-      text: `Салем! Я AQYL — твой репетитор. Я не даю готовых ответов: моя задача — довести тебя до решения вопросами и подсказками.\n\nСпроси про любую тему школьной программы или узнай, **что тебе стоит подтянуть в первую очередь**.`,
+      text: t('tutor.greeting'),
       refs: [],
     }];
+    greetingLang = lang();
   }
 
   return html`
@@ -37,14 +37,14 @@ export function renderTutor() {
     <div class="page-head">
       <div>
         <span class="label label-accent">${t('tutor.title')}</span>
-        <h1 style="font-size:2rem;margin-top:14px">Сократовский репетитор</h1>
-        <p style="margin-top:6px">Отвечает по учебному графу — и признаётся, когда темы в программе нет.</p>
+        <h1 style="font-size:2rem;margin-top:14px">${t('tutor.h1')}</h1>
+        <p style="margin-top:6px">${t('tutor.sub')}</p>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <span class="pill ${s.cloudAI ? 'pill-strong' : 'pill-mastered'}">
           ${raw(icon(s.cloudAI ? 'cloud' : 'bolt'))} ${s.cloudAI ? t('tutor.cloud') : t('tutor.offline')}
         </span>
-        <button class="btn btn-ghost btn-sm" data-act="toggle-ai">Переключить</button>
+        <button class="btn btn-ghost btn-sm" data-act="toggle-ai">${t('tutor.toggle')}</button>
       </div>
     </div>
 
@@ -56,29 +56,26 @@ export function renderTutor() {
 
       <form class="chat-input" data-act="tutor-send">
         <input class="input" name="q" id="tutorInput" placeholder="${t('tutor.placeholder')}" autocomplete="off" ${busy ? 'disabled' : ''}>
-        <button class="btn btn-primary" type="submit" aria-label="Отправить" ${busy ? 'disabled' : ''}>${raw(icon('arrowRight', 17))}</button>
+        <button class="btn btn-primary" type="submit" aria-label="${t('tutor.send')}" ${busy ? 'disabled' : ''}>${raw(icon('arrowRight', 17))}</button>
       </form>
 
       <div class="chat-chips">
-        ${raw(SUGGESTIONS.map((q) => `<button class="choice" data-act="tutor-suggest" data-q="${q.replace(/"/g, '&quot;')}">${q}</button>`).join(''))}
+        ${raw(SUGGESTION_KEYS.map((k) => t(k)).map((q) => `<button class="choice" data-act="tutor-suggest" data-q="${q.replace(/"/g, '&quot;')}">${q}</button>`).join(''))}
       </div>
     </div>
 
     <div class="panel" style="margin-top:18px">
-      <h3 style="margin-bottom:8px">Как это устроено</h3>
+      <h3 style="margin-bottom:8px">${t('tutor.howH')}</h3>
       <p style="font-size:.9rem">
-        <strong style="color:var(--text)">Офлайн-режим</strong> — вопрос токенизируется, ранжируется по учебному графу (частотное взвешивание, устойчивое к словоформам),
-        а ответ собирается политикой педагогики: определяется намерение, подтягивается карта пробелов ученика и подбирается следующий шаг.
-        Ничего не уходит в сеть, задержка — миллисекунды, стоимость — ноль.
+        <strong style="color:var(--text)">${t('tutor.howOffT')}</strong> ${t('tutor.howOffB')}
       </p>
       <p style="font-size:.9rem;margin-top:10px">
-        <strong style="color:var(--text)">Cloud-режим</strong> — тот же собранный контекст уходит в Claude API одним запросом с системным промптом, который запрещает выдавать готовый ответ.
-        Гибрид даёт главное: платформа не перестаёт работать, когда в школе пропадает интернет.
+        <strong style="color:var(--text)">${t('tutor.howCloudT')}</strong> ${t('tutor.howCloudB')}
       </p>
       <div class="field" style="margin-top:16px">
-        <label for="apiKey">Ключ Claude API (необязательно, хранится только в этом браузере)</label>
+        <label for="apiKey">${t('tutor.keyLabel')}</label>
         <input class="input" id="apiKey" type="password" placeholder="sk-ant-…" value="${getSettings().apiKey}" data-act="noop">
-        <button class="btn btn-sm" data-act="save-key" style="justify-self:start">Сохранить ключ</button>
+        <button class="btn btn-sm" data-act="save-key" style="justify-self:start">${t('tutor.saveKey')}</button>
       </div>
     </div>
   </div>`;
@@ -121,7 +118,7 @@ async function ask(text, rerender) {
     }
   } catch (e) {
     reply = answerLocally(text, p, ctx, lang());
-    reply.text = `_Cloud-режим недоступен (${e.message}), отвечаю офлайн._\n\n` + reply.text;
+    reply.text = tf('tutor.cloudFail', { e: e.message }) + '\n\n' + reply.text;
   }
   log.push({ role: 'bot', ...reply });
   busy = false;
@@ -149,16 +146,16 @@ export function registerTutorActions(rerender) {
 
   action('toggle-ai', () => {
     const s = getSettings();
-    if (!s.cloudAI && !s.apiKey) return toast('Сначала сохрани ключ Claude API');
+    if (!s.cloudAI && !s.apiKey) return toast(t('tutor.needKey'));
     update((st) => { st.settings.cloudAI = !st.settings.cloudAI; });
-    toast(getSettings().cloudAI ? 'Cloud-режим включён' : 'Офлайн-режим включён');
+    toast(t(getSettings().cloudAI ? 'tutor.cloudOn' : 'tutor.offlineOn'));
     rerender();
   });
 
   action('save-key', () => {
     const el = document.getElementById('apiKey');
     update((st) => { st.settings.apiKey = el.value.trim(); });
-    toast(el.value.trim() ? 'Ключ сохранён локально' : 'Ключ удалён');
+    toast(t(el.value.trim() ? 'tutor.keySaved' : 'tutor.keyCleared'));
   });
 
   action('noop', () => {});
@@ -169,5 +166,5 @@ export function flushPending(rerender) {
   if (!pendingQuestion) return;
   const q = pendingQuestion;
   pendingQuestion = null;
-  ask(`Объясни тему: ${q}`, rerender);
+  ask(tf('tutor.explainTopic', { q }), rerender);
 }

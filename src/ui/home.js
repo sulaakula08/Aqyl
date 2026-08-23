@@ -10,24 +10,21 @@ import { getProfile } from '../state.js';
  */
 function diagnosisCard() {
   const steps = [
-    { n: '3', title: 'Квадратные уравнения', band: 'gap', pct: 21,
-      note: 'Симптом: ученик не решает задания, обычная платформа остановилась бы здесь.' },
-    { n: '2', title: 'Преобразование выражений', band: 'gap', pct: 28,
-      note: 'Проверка предпосылки: раскрытие скобок и формулы сокращённого умножения.' },
-    { n: '1', title: 'Знаки при раскрытии скобок', band: 'gap', pct: 19, root: true,
-      note: 'Первопричина. 4 из 5 ошибок ученика содержат потерю минуса перед скобкой.' },
+    { n: '3', band: 'gap', pct: 21, key: 'demo3' },
+    { n: '2', band: 'gap', pct: 28, key: 'demo2' },
+    { n: '1', band: 'gap', pct: 19, key: 'demo1', root: true },
   ];
 
   return raw(`
   <figure class="demo-card" style="margin:0">
     <figcaption class="demo-head">
       <span class="demo-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-      <span class="label">Пример вывода системы</span>
+      <span class="label">${t('home.demoLabel')}</span>
     </figcaption>
     <div class="demo-body">
-      <div class="label" style="margin-bottom:6px">Диагноз</div>
+      <div class="label" style="margin-bottom:6px">${t('home.demoDiag')}</div>
       <p style="color:var(--text);font-size:1.02rem;font-weight:500;margin-bottom:20px;line-height:1.45">
-        Дело не в дискриминанте. Ученик теряет знак при раскрытии скобок.
+        ${t('home.demoVerdict')}
       </p>
 
       <div class="descend">
@@ -35,34 +32,35 @@ function diagnosisCard() {
           <div class="descend-step ${s.root ? 'is-root' : ''}">
             <div class="tick"><span class="dot">${s.n}</span></div>
             <div class="body">
-              <h4>${s.title} <span class="pill pill-${s.band}">${s.pct}%</span></h4>
-              <p>${s.note}</p>
+              <h4>${t('home.' + s.key + 't')} <span class="pill pill-${s.band}">${s.pct}%</span></h4>
+              <p>${t('home.' + s.key + 'n')}</p>
             </div>
           </div>`).join('')}
       </div>
 
       <div class="row" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--rule);gap:14px">
-        <span class="label">Маршрут</span>
-        <span style="font-size:.86rem;color:var(--text)">4 задания · ~35 минут · затем возврат к квадратным</span>
+        <span class="label">${t('home.demoRoute')}</span>
+        <span style="font-size:.86rem;color:var(--text)">${t('home.demoRouteVal')}</span>
       </div>
     </div>
   </figure>`);
 }
 
-const FAQ = [
-  ['Чем это отличается от готовых сборников задач и видеоуроков?',
-   'Сборник не знает, что именно вы не понимаете. AQYL строит вероятностную оценку освоения по каждой теме и связывает темы графом предпосылок, поэтому может сказать не «повторите тему», а «вот конкретное место, с которого посыпалось». Разница видна на первом же занятии: вместо десяти однотипных задач ученик получает четыре задания на две темы ниже — и после них верхняя тема начинает решаться.'],
-  ['Откуда система знает мой уровень всего по восьми вопросам?',
-   'Это адаптивный тест, а не контрольная. Каждый следующий вопрос подбирается там, где предсказанная вероятность вашего успеха ближе всего к 50 % — именно такой ответ несёт максимум информации. Восемь ответов в правильных точках дают больше, чем сорок случайных. По непройденным темам оценка выводится из графа: она помечена отдельно и уточняется, как только вы решите там первое задание.'],
-  ['Что происходит, когда в школе пропадает интернет?',
-   'Ничего. Модель освоения, подбор заданий, построение плана и репетитор считаются прямо в браузере. После первого открытия service worker держит всё приложение в кэше, и оно запускается без сети. Прогресс сохраняется локально и синхронизируется, когда связь появится.'],
-  ['Насколько это подходит для казахоязычных классов?',
-   'Условия заданий, подсказки и разборы существуют на казахском и русском — не только подписи кнопок. Это принципиально: в сельских школах обучение часто идёт на казахском, а качественных цифровых материалов на нём кратно меньше. Интерфейс дополнительно переведён на английский.'],
-  ['Может ли ИИ просто решить задание за ученика?',
-   'Нет, и это заложено в правилах, а не в благих намерениях. На прямую просьбу дать ответ репетитор возвращает следующую ступень лестницы подсказок — встречный вопрос. Готовый ответ появляется только после того, как ученик отправил своё решение. В облачном режиме тот же запрет прописан в системном промпте.'],
-  ['Как это масштабируется на школу и на регион?',
-   'Расчёты идут на устройстве ученика, поэтому себестоимость обслуживания одного пользователя близка к нулю: серверу остаётся только синхронизация. Учителю нужен один экран, чтобы увидеть общий пробел класса; управлению образования — сравнение по школам. Платформа бесплатна для учеников, платная часть — аналитика для школ и регионов.'],
-];
+// Порядковые номера в вёрстке (01…05) — оформление, а не текст: не переводятся.
+const FAQ_KEYS = ['faq1', 'faq2', 'faq3', 'faq4', 'faq5', 'faq6'];
+const THEM_KEYS = ['them1', 'them2', 'them3', 'them4', 'them5', 'them6'];
+const US_KEYS = ['us1', 'us2', 'us3', 'us4', 'us5', 'us6'];
+const STEP_KEYS = ['step1', 'step2', 'step3', 'step4'];
+const STUDENT_KEYS = ['st1', 'st2', 'st3', 'st4'];
+const TEACHER_KEYS = ['te1', 'te2', 'te3', 'te4'];
+const FIGURES = ['fig1', 'fig2', 'fig3', 'fig4'];
+const PRINCIPLES = ['p1', 'p2', 'p3'];
+
+/** Пункт списка «Ученику» / «Учителю»: жирный зачин + пояснение. */
+const bullet = (k) => `
+  <li style="font-size:.92rem;color:var(--text-dim)">
+    <strong style="color:var(--text)">${t('home.' + k + 't')}</strong> ${t('home.' + k + 'b')}
+  </li>`;
 
 export function renderHome() {
   const p = getProfile();
@@ -75,24 +73,21 @@ export function renderHome() {
     <section class="hero">
       <div class="wrap hero-grid">
         <div>
-          <span class="label label-accent">Трек Social Impact · Future Minds 2026</span>
-          <h1>Найти причину,<br>а не <u>поставить оценку</u></h1>
-          <p class="hero-lead">
-            Школьник проваливает квадратные уравнения. Обычная платформа даёт ему ещё десять квадратных
-            уравнений. AQYL спускается по графу знаний и находит настоящую причину — двумя темами ниже.
-          </p>
+          <span class="label label-accent">${t('home.kicker')}</span>
+          <h1>${t('home.h1a')}<br>${t('home.h1b')} <u>${t('home.h1u')}</u></h1>
+          <p class="hero-lead">${t('home.lead')}</p>
 
           <div class="hero-cta">
             <a class="btn btn-primary btn-lg" href="#${started ? '/dashboard' : '/onboarding'}">
-              ${started ? t('cta.continue') : 'Пройти диагностику'}
+              ${started ? t('cta.continue') : t('cta.diagnostic')}
             </a>
-            <a class="btn btn-lg btn-ghost" href="#/method">Как устроен ИИ</a>
+            <a class="btn btn-lg btn-ghost" href="#/method">${t('app.methodNav')}</a>
           </div>
 
           <div class="hero-meta">
-            <div><b>8</b> вопросов на диагностику</div>
-            <div><b>3</b> языка, включая задания</div>
-            <div><b>0</b> интернета после загрузки</div>
+            <div><b>8</b> ${t('home.meta1')}</div>
+            <div><b>3</b> ${t('home.meta2')}</div>
+            <div><b>0</b> ${t('home.meta3')}</div>
           </div>
         </div>
 
@@ -103,26 +98,12 @@ export function renderHome() {
     <!-- Числа -->
     <section class="wrap" style="padding-bottom:20px">
       <div class="figures">
-        <div>
-          <div class="fig-num">3,7 млн</div>
-          <div class="fig-lbl">школьников в Казахстане учатся по одной программе — при совершенно разном стартовом уровне</div>
-          <div class="fig-src">Бюро национальной статистики РК</div>
-        </div>
-        <div>
-          <div class="fig-num">~85</div>
-          <div class="fig-lbl">баллов PISA — разрыв между городскими и сельскими школами. Это примерно два года обучения</div>
-          <div class="fig-src">Оценка по отчётам OECD PISA</div>
-        </div>
-        <div>
-          <div class="fig-num">7 из 10</div>
-          <div class="fig-lbl">семей не могут позволить репетитора по двум-трём предметам одновременно</div>
-          <div class="fig-src">Оценка проекта</div>
-        </div>
-        <div>
-          <div class="fig-num">25+</div>
-          <div class="fig-lbl">учеников на учителя: диагностировать пробелы каждого индивидуально физически невозможно</div>
-          <div class="fig-src">Средняя наполняемость класса</div>
-        </div>
+        ${raw(FIGURES.map((f) => `
+          <div>
+            <div class="fig-num">${t('home.' + f + 'n')}</div>
+            <div class="fig-lbl">${t('home.' + f + 'l')}</div>
+            <div class="fig-src">${t('home.' + f + 's')}</div>
+          </div>`).join(''))}
       </div>
     </section>
 
@@ -130,37 +111,18 @@ export function renderHome() {
     <section class="section wrap">
       <div class="section-head">
         <span class="section-num">01</span>
-        <h2>Пробел лечат там, где он виден, а не там, где он возник</h2>
-        <p>
-          Качественные материалы в Казахстане существуют. Проблема не в их отсутствии, а в том, что они
-          не знают конкретного ученика: одинаковы для того, кто не понял тему на прошлой неделе, и для того,
-          у кого база рассыпалась два года назад. Репетитор решает это за счёт диагноза — и именно диагноз
-          стоит дороже всего.
-        </p>
+        <h2>${t('home.s01')}</h2>
+        <p>${t('home.s01p')}</p>
       </div>
 
       <div class="versus">
         <div class="them">
-          <h4>Типичная образовательная платформа</h4>
-          <ul>
-            <li>«Ты набрал 40 % по квадратным уравнениям»</li>
-            <li>Предлагает те же задачи ещё раз</li>
-            <li>Рекомендации нельзя проверить — это чёрный ящик</li>
-            <li>Требует стабильного интернета</li>
-            <li>Казахский — только перевод интерфейса</li>
-            <li>Учитель видит итоговый балл, но не причину</li>
-          </ul>
+          <h4>${t('home.themTitle')}</h4>
+          <ul>${raw(THEM_KEYS.map((k) => `<li>${t('home.' + k)}</li>`).join(''))}</ul>
         </div>
         <div class="us">
           <h4>AQYL</h4>
-          <ul>
-            <li>«Дело не в дискриминанте — ты теряешь знак при раскрытии скобок»</li>
-            <li>Спускается по графу предпосылок до первопричины</li>
-            <li>Показывает факторы и веса каждой рекомендации</li>
-            <li>Полностью работает офлайн после первой загрузки</li>
-            <li>Условия, подсказки и разборы — на казахском</li>
-            <li>Учитель видит общий пробел класса за пять секунд</li>
-          </ul>
+          <ul>${raw(US_KEYS.map((k) => `<li>${t('home.' + k)}</li>`).join(''))}</ul>
         </div>
       </div>
     </section>
@@ -169,20 +131,15 @@ export function renderHome() {
     <section class="section wrap">
       <div class="section-head">
         <span class="section-num">02</span>
-        <h2>Четыре шага от первого вопроса до плана</h2>
+        <h2>${t('home.s02')}</h2>
       </div>
 
       <div class="steps">
-        ${raw([
-          ['Диагностика', 'Восемь адаптивных вопросов. Каждый следующий выбирается там, где ответ даёт максимум информации об уровне, а не там, где он «по программе».'],
-          ['Поиск причины', 'Оценка освоения по каждой теме, затем обход графа предпосылок вниз — до темы, которая действительно держит остальные.'],
-          ['Маршрут', 'Темы выстраиваются топологической сортировкой и раскладываются по неделям, оставшимся до экзамена. С честным ответом, успеваете ли вы.'],
-          ['Практика', 'Задание подбирается так, чтобы шанс справиться был около 70 %. Три ступени подсказок, разбор ошибки с названием типичного заблуждения.'],
-        ].map(([title, body], i) => `
+        ${raw(STEP_KEYS.map((k, i) => `
           <article>
-            <span class="step-num">Шаг ${String(i + 1).padStart(2, '0')}</span>
-            <h3>${title}</h3>
-            <p>${body}</p>
+            <span class="step-num">${t('home.step')} ${String(i + 1).padStart(2, '0')}</span>
+            <h3>${t('home.' + k + 't')}</h3>
+            <p>${t('home.' + k + 'b')}</p>
           </article>`).join(''))}
       </div>
     </section>
@@ -191,38 +148,31 @@ export function renderHome() {
     <section class="section wrap">
       <div class="section-head">
         <span class="section-num">03</span>
-        <h2>Два продукта в одном: ученику и учителю</h2>
-        <p>Ученик и учитель смотрят на одни и те же данные, но с разной высоты. Ученику важно, что делать
-        сегодня; учителю — где проседает весь класс и кому нужна отдельная помощь.</p>
+        <h2>${t('home.s03')}</h2>
+        <p>${t('home.s03p')}</p>
       </div>
 
       <div class="grid g2">
         <div class="panel">
-          <span class="label">Ученику</span>
-          <h3 style="margin:12px 0 14px">Кабинет, карта знаний и план</h3>
+          <span class="label">${t('home.forStudent')}</span>
+          <h3 style="margin:12px 0 14px">${t('home.studentH')}</h3>
           <ul style="list-style:none;padding:0;display:grid;gap:11px">
-            <li style="font-size:.92rem;color:var(--text-dim)"><strong style="color:var(--text)">Карта освоения.</strong> Вероятность освоения по каждой теме с учётом забывания — темы, которых вы давно не касались, честно теряют в оценке.</li>
-            <li style="font-size:.92rem;color:var(--text-dim)"><strong style="color:var(--text)">Объяснённые рекомендации.</strong> Рядом с каждой темой видно, что повлияло на выбор: пробел, готовность базы, связь с целью, ценность разблокировки.</li>
-            <li style="font-size:.92rem;color:var(--text-dim)"><strong style="color:var(--text)">Интерактивный граф.</strong> Видно, что от чего зависит, что уже открыто и что заблокировано отсутствующей базой.</li>
-            <li style="font-size:.92rem;color:var(--text-dim)"><strong style="color:var(--text)">План до экзамена.</strong> Недельный маршрут с расчётом нагрузки и предупреждением, если текущий темп не укладывается в срок.</li>
+            ${raw(STUDENT_KEYS.map(bullet).join(''))}
           </ul>
           <div class="row" style="margin-top:20px">
-            <a class="btn btn-sm" href="#/dashboard">Открыть кабинет</a>
-            <a class="btn btn-sm btn-ghost" href="#/graph">Карта знаний</a>
+            <a class="btn btn-sm" href="#/dashboard">${t('home.openDash')}</a>
+            <a class="btn btn-sm btn-ghost" href="#/graph">${t('nav.graph')}</a>
           </div>
         </div>
 
         <div class="panel">
-          <span class="label">Учителю</span>
-          <h3 style="margin:12px 0 14px">Класс на одном экране</h3>
+          <span class="label">${t('home.forTeacher')}</span>
+          <h3 style="margin:12px 0 14px">${t('home.teacherH')}</h3>
           <ul style="list-style:none;padding:0;display:grid;gap:11px">
-            <li style="font-size:.92rem;color:var(--text-dim)"><strong style="color:var(--text)">Тепловая карта.</strong> Ученики × темы. Вертикальная красная полоса — проблема в объяснении темы, горизонтальная — отставание конкретного ученика.</li>
-            <li style="font-size:.92rem;color:var(--text-dim)"><strong style="color:var(--text)">Приоритет вмешательства.</strong> Темы ранжируются по эффекту: низкое освоение, умноженное на число зависимых тем. Один урок закрывает сразу несколько.</li>
-            <li style="font-size:.92rem;color:var(--text-dim)"><strong style="color:var(--text)">Зона риска.</strong> Сочетание слабого освоения и редких заходов — чаще проблема доступа, чем способностей.</li>
-            <li style="font-size:.92rem;color:var(--text-dim)"><strong style="color:var(--text)">Свои модули.</strong> Учитель добавляет собственную тему в граф класса, и движок сразу начинает её учитывать.</li>
+            ${raw(TEACHER_KEYS.map(bullet).join(''))}
           </ul>
           <div class="row" style="margin-top:20px">
-            <a class="btn btn-sm" href="#/teacher">Открыть панель учителя</a>
+            <a class="btn btn-sm" href="#/teacher">${t('home.openTeacher')}</a>
           </div>
         </div>
       </div>
@@ -232,31 +182,16 @@ export function renderHome() {
     <section class="section wrap">
       <div class="section-head">
         <span class="section-num">04</span>
-        <h2>Три решения, о которых легко забыть в Астане</h2>
+        <h2>${t('home.s04')}</h2>
       </div>
 
       <div class="grid g3">
-        <div class="panel panel-sunk">
-          <span class="label label-accent">Связь</span>
-          <h3 style="margin:12px 0 10px">Офлайн — требование, а не бонус</h3>
-          <p style="font-size:.92rem">В части сельских школ интернет появляется на час в день. Поэтому весь ИИ считается
-          на устройстве ученика, а приложение весит меньше трёхсот килобайт и не имеет ни одной внешней зависимости.
-          Продукт, который падает без сети, для этой аудитории не существует.</p>
-        </div>
-        <div class="panel panel-sunk">
-          <span class="label label-accent">Язык</span>
-          <h3 style="margin:12px 0 10px">Қазақша на уровне содержания</h3>
-          <p style="font-size:.92rem">Перевести кнопки — не значит сделать продукт казахоязычным. Условия задач,
-          подсказки и разборы написаны на двух языках, потому что ученик, который читает задачу на неродном
-          языке, тратит силы на перевод, а не на математику.</p>
-        </div>
-        <div class="panel panel-sunk">
-          <span class="label label-accent">Доверие</span>
-          <h3 style="margin:12px 0 10px">Решения, которые можно оспорить</h3>
-          <p style="font-size:.92rem">Учитель не станет пользоваться системой, чьи выводы нельзя проверить.
-          Каждая рекомендация раскладывается на слагаемые с весами, каждая оценка освоения выводится из
-          конкретных ответов, а вывод по классу считается формулой, которую видно рядом.</p>
-        </div>
+        ${raw(PRINCIPLES.map((k) => `
+          <div class="panel panel-sunk">
+            <span class="label label-accent">${t('home.' + k + 'l')}</span>
+            <h3 style="margin:12px 0 10px">${t('home.' + k + 'h')}</h3>
+            <p style="font-size:.92rem">${t('home.' + k + 'b')}</p>
+          </div>`).join(''))}
       </div>
     </section>
 
@@ -264,14 +199,14 @@ export function renderHome() {
     <section class="section wrap">
       <div class="section-head">
         <span class="section-num">05</span>
-        <h2>Вопросы, которые задают первыми</h2>
+        <h2>${t('home.s05')}</h2>
       </div>
 
       <div class="faq narrow" style="margin:0">
-        ${raw(FAQ.map(([q, a], i) => `
+        ${raw(FAQ_KEYS.map((k, i) => `
           <details ${i === 0 ? 'open' : ''}>
-            <summary>${q}</summary>
-            <p>${a}</p>
+            <summary>${t('home.' + k + 'q')}</summary>
+            <p>${t('home.' + k + 'a')}</p>
           </details>`).join(''))}
       </div>
     </section>
@@ -280,10 +215,10 @@ export function renderHome() {
     <section class="section wrap">
       <div class="panel panel-accent" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;justify-content:space-between;padding:34px">
         <div>
-          <h2 style="font-size:1.7rem;margin-bottom:8px">Посмотрите на свою карту знаний</h2>
-          <p style="max-width:52ch">Диагностика занимает около трёх минут. Регистрация не нужна — всё считается и хранится в вашем браузере.</p>
+          <h2 style="font-size:1.7rem;margin-bottom:8px">${t('home.finalH')}</h2>
+          <p style="max-width:52ch">${t('home.finalP')}</p>
         </div>
-        <a class="btn btn-primary btn-lg" href="#/onboarding">Начать</a>
+        <a class="btn btn-primary btn-lg" href="#/onboarding">${t('home.finalCta')}</a>
       </div>
     </section>
   </div>`;

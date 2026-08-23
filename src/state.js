@@ -16,7 +16,7 @@ const emptyProfile = () => ({
   id: 'me',
   name: '',
   school: '',
-  region: 'Туркестанская область',
+  region: 'reg.turkestan',
   grade: 9,
   subjects: ['math'],
   goal: 'ent',
@@ -40,6 +40,33 @@ const defaultState = () => ({
   ui: { onboarded: false },
 });
 
+/**
+ * Регионы раньше хранились готовой русской строкой, а после перевода интерфейса
+ * стали ключами словаря. У тех, кто уже открывал приложение, в localStorage
+ * лежит старое значение, поэтому переводим его один раз при загрузке —
+ * иначе в казахском и английском кабинете осталась бы русская подпись.
+ */
+const LEGACY_REGIONS = {
+  'Астана': 'reg.astana',
+  'Алматы': 'reg.almaty',
+  'Шымкент': 'reg.shymkent',
+  'Туркестанская область': 'reg.turkestan',
+  'Кызылординская область': 'reg.kyzylorda',
+  'Актюбинская область': 'reg.aktobe',
+  'Жамбылская область': 'reg.zhambyl',
+  'Восточно-Казахстанская область': 'reg.vko',
+  'Павлодарская область': 'reg.pavlodar',
+  'Атырауская область': 'reg.atyrau',
+  'Другой регион': 'reg.other',
+};
+
+function migrateProfile(profile) {
+  const region = LEGACY_REGIONS[profile.region] || profile.region;
+  // Имя по умолчанию тоже было записано строкой; пустое имя подставит текущий язык.
+  const name = profile.name === 'Ученик' ? '' : profile.name;
+  return { ...profile, region, name };
+}
+
 let state = load();
 const listeners = new Set();
 
@@ -49,14 +76,18 @@ function load() {
     if (!raw) return defaultState();
     const parsed = JSON.parse(raw);
     const base = defaultState();
+    // Демо-класс до перевода хранился с готовыми строками названия и школы.
+    // Такой объект больше не отрисовать, поэтому берём свежий из seed.
+    const klass = parsed.klass?.students?.length && parsed.klass.nameKey ? parsed.klass : base.klass;
     return {
       ...base,
       ...parsed,
-      profile: { ...base.profile, ...parsed.profile },
+      profile: migrateProfile({ ...base.profile, ...parsed.profile }),
       settings: { ...base.settings, ...parsed.settings },
-      klass: parsed.klass?.students?.length ? parsed.klass : base.klass,
+      klass,
     };
-  } catch {
+  } catch (e) {
+    console.warn('AQYL: состояние не прочитано, начинаем с чистого профиля', e);
     return defaultState();
   }
 }

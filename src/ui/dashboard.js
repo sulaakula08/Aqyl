@@ -1,6 +1,6 @@
 import { html, raw, ring, excerpt } from './dom.js';
 import { icon } from './icons.js';
-import { t, tf, loc, plural } from '../i18n.js';
+import { t, tf, loc, plt } from '../i18n.js';
 import { getProfile, ALL_BADGES } from '../state.js';
 import { recommend, weakSpots, masteryOf, successChance } from '../engine/recommender.js';
 import { masteryBand } from '../engine/mastery.js';
@@ -35,7 +35,7 @@ export function renderDashboard() {
   <div class="page wrap">
     <div class="page-head">
       <div>
-        <span class="label label-accent">${p.region}${p.school ? ' · ' + p.school : ''}</span>
+        <span class="label label-accent">${t(p.region)}${p.school ? ' · ' + p.school : ''}</span>
         <h1 style="font-size:2rem;margin-top:14px">${p.name ? t('dash.hi') + ', ' + p.name : t('dash.hi')}</h1>
         <p style="margin-top:6px">${String(p.grade)} ${t('common.grade')} · ${String(p.attempts)} ${t('dash.solved')} · ${tf('dash.topicsOf', { a: mastered, b: topics.length })}</p>
       </div>
@@ -58,7 +58,7 @@ export function renderDashboard() {
 
       <section class="panel">
         <h3 style="margin-bottom:6px">${t('dash.next')}</h3>
-        <p style="font-size:.86rem;margin-bottom:16px">Каждая рекомендация ниже сопровождается причиной — движок не скрывает свою логику.</p>
+        <p style="font-size:.86rem;margin-bottom:16px">${t('dash.recoNote')}</p>
         <div class="reco">
           ${raw(recos.map((r) => recoCard(p, r)).join(''))}
         </div>
@@ -77,9 +77,9 @@ export function renderDashboard() {
               <span class="pill pill-${band}">${t('band.' + band)} · ${Math.round(w.pL * 100)}%</span>
             </div>
             <div class="bar bar-${band}"><i style="width:${(w.pL * 100).toFixed(0)}%"></i></div>
-            <div class="faint" style="font-size:.78rem;margin-top:5px">${w.attempts} ${plural(w.attempts, 'попытка', 'попытки', 'попыток')} · ${topic.summary ? excerpt(loc(topic.summary), 90) : ''}</div>
+            <div class="faint" style="font-size:.78rem;margin-top:5px">${w.attempts} ${plt(w.attempts, 'pl.attempt')} · ${topic.summary ? excerpt(loc(topic.summary), 90) : ''}</div>
           </div>`;
-        }).join('')}</div>` : '<p>Пока пробелов не обнаружено. Реши несколько заданий, чтобы система собрала данные.</p>')}
+        }).join('')}</div>` : `<p>${t('dash.noGaps')}</p>`)}
       </section>
 
       <section class="panel">
@@ -135,7 +135,7 @@ function recoCard(p, r) {
 
       ${rootDiffers ? `
         <div class="chain">
-          <span class="faint">Маршрут восстановления:</span>
+          <span class="faint">${t('dash.chain')}</span>
           ${r.chain.map((id, i) => `${i ? '<span class="arrow">→</span>' : ''}<b>${loc(TOPIC_BY_ID[id])}</b>`).join('')}
         </div>` : ''}
     </div>
