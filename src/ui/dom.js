@@ -71,6 +71,22 @@ export function toast(message) {
   el._t = setTimeout(() => el.classList.remove('show'), 2600);
 }
 
+/**
+ * Короткая выдержка из текста.
+ *
+ * Раньше многоточие приклеивалось безусловно, поэтому короткое описание,
+ * и без того заканчивающееся точкой, выводилось как «…величины.…» — в вёрстке
+ * это читалось четырьмя точками подряд. Режем только то, что длиннее нормы,
+ * и по границе слова, а не посреди него.
+ */
+export function excerpt(text, max = 90) {
+  const s = String(text || '').trim();
+  if (s.length <= max) return s;
+  const cut = s.slice(0, max);
+  const sp = cut.lastIndexOf(' ');
+  return (sp > max * 0.6 ? cut.slice(0, sp) : cut).replace(/[\s.,;:—-]+$/, '') + '…';
+}
+
 /** Кольцевой индикатор прогресса. Возвращает raw — вставляется внутрь других шаблонов. */
 export function ring(pct, label, sub) {
   const r = 46;

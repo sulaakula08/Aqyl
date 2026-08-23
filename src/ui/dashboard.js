@@ -1,6 +1,6 @@
-import { html, raw, ring } from './dom.js';
+import { html, raw, ring, excerpt } from './dom.js';
 import { icon } from './icons.js';
-import { t, tf, loc } from '../i18n.js';
+import { t, tf, loc, plural } from '../i18n.js';
 import { getProfile, ALL_BADGES } from '../state.js';
 import { recommend, weakSpots, masteryOf, successChance } from '../engine/recommender.js';
 import { masteryBand } from '../engine/mastery.js';
@@ -77,7 +77,7 @@ export function renderDashboard() {
               <span class="pill pill-${band}">${t('band.' + band)} · ${Math.round(w.pL * 100)}%</span>
             </div>
             <div class="bar bar-${band}"><i style="width:${(w.pL * 100).toFixed(0)}%"></i></div>
-            <div class="faint" style="font-size:.78rem;margin-top:5px">${w.attempts} попыток · ${topic.summary ? loc(topic.summary).slice(0, 90) + '…' : ''}</div>
+            <div class="faint" style="font-size:.78rem;margin-top:5px">${w.attempts} ${plural(w.attempts, 'попытка', 'попытки', 'попыток')} · ${topic.summary ? excerpt(loc(topic.summary), 90) : ''}</div>
           </div>`;
         }).join('')}</div>` : '<p>Пока пробелов не обнаружено. Реши несколько заданий, чтобы система собрала данные.</p>')}
       </section>

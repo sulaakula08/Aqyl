@@ -54,6 +54,35 @@ function layout(topics) {
   };
 }
 
+/**
+ * Подпись узла в две строки.
+ *
+ * Раньше длинное название просто обрезалось на 24-м символе, и половина
+ * тем на карте читалась как «Парабола и квадратичная…» — то есть именно то,
+ * ради чего на карту и смотрят, пропадало. SVG сам текст не переносит,
+ * поэтому переносим по словам в <tspan>: две строки помещаются в шаг сетки
+ * (rowH = 92), а многоточие остаётся только для действительно длинных имён.
+ */
+const LABEL_CHARS = 22;
+
+function wrapLabel(label, maxChars = LABEL_CHARS, maxLines = 2) {
+  if (label.length <= maxChars) return [label];
+
+  const lines = [];
+  let line = '';
+  for (const word of label.split(' ')) {
+    if (!line) { line = word; continue; }
+    if ((line + ' ' + word).length <= maxChars) { line += ' ' + word; continue; }
+    lines.push(line);
+    line = word;
+    if (lines.length === maxLines - 1) break;
+  }
+  // Остаток — последняя строка; если он всё ещё длиннее нормы, режем с многоточием.
+  const rest = label.slice(lines.join(' ').length).trim();
+  lines.push(rest.length > maxChars ? rest.slice(0, maxChars - 1) + '…' : rest);
+  return lines;
+}
+
 export function renderGraph() {
   const p = getProfile();
   const subjects = p.subjects?.length ? p.subjects : ['math'];
@@ -83,7 +112,7 @@ export function renderGraph() {
     const ready = readinessOf(p, tp.id);
     const r = 11 + pL * 8;
     const label = loc(tp);
-    const short = label.length > 24 ? label.slice(0, 23) + '…' : label;
+    const lines = wrapLabel(label);
     return `
       <g class="gnode ${isSel ? 'active' : ''} ${dim ? 'gdim' : ''}" data-act="graph-node" data-id="${tp.id}"
          role="button" tabindex="0" aria-label="${label}">
@@ -92,7 +121,9 @@ export function renderGraph() {
         <circle cx="${c.x}" cy="${c.y}" r="${r}" fill="${BAND_COLOR[band]}"
                 stroke="${isSel ? 'var(--text)' : 'transparent'}" stroke-width="2"/>
         ${ready < 0.5 ? `<g class="glock">${iconGlyph('lock', c.x, c.y, 13)}</g>` : ''}
-        <text x="${c.x}" y="${c.y + r + 15}" text-anchor="middle">${short}</text>
+        <text x="${c.x}" y="${c.y + r + 14}" text-anchor="middle">${
+          lines.map((ln, i) => `<tspan x="${c.x}" dy="${i ? 11 : 0}">${ln}</tspan>`).join('')
+        }</text>
       </g>`;
   }).join('');
 

@@ -1,19 +1,11 @@
 import { html, raw, action, toast, initials } from './dom.js';
-import { t, loc } from '../i18n.js';
+import { t, loc, plural } from '../i18n.js';
 import { getState, addTeacherModule } from '../state.js';
 import { masteryBand } from '../engine/mastery.js';
 import { TOPICS, TOPIC_BY_ID } from '../data/curriculum.js';
 
 let subject = 'math';
 let showAdd = false;
-
-/** Русское склонение по числу: 1 тема, 2 темы, 5 тем. */
-function plural(n, one, few, many) {
-  const m10 = n % 10, m100 = n % 100;
-  if (m10 === 1 && m100 !== 11) return one;
-  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
-  return many;
-}
 
 /**
  * Цвет ячейки тепловой карты. Опорные точки совпадают с семантическими
@@ -135,12 +127,12 @@ export function renderTeacher() {
       <div class="heat-wrap">
         <table class="heat">
           <thead>
-            <tr><th></th>${raw(a.topics.map((tp) => `<th class="rot">${loc(tp)}</th>`).join(''))}</tr>
+            <tr><th class="nm-h" scope="col"><span class="sr-only">Ученик</span></th>${raw(a.topics.map((tp) => `<th class="rot" scope="col"><span>${loc(tp)}</span></th>`).join(''))}</tr>
           </thead>
           <tbody>
             ${raw(klass.students.map((s) => `
               <tr>
-                <td class="nm">${s.name}</td>
+                <th class="nm" scope="row">${s.name}</th>
                 ${a.topics.map((tp) => {
                   const pL = s.mastery[tp.id]?.pL ?? 0.25;
                   return `<td class="cell" style="background:${heatColor(pL)}"
