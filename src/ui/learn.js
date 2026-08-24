@@ -1,9 +1,9 @@
 import { html, raw, action, toast, speak } from './dom.js';
 import { icon } from './icons.js';
-import { t, loc, speechLocale } from '../i18n.js';
+import { t, tf, loc, speechLocale } from '../i18n.js';
 import { getProfile, getSettings, recordAttempt } from '../state.js';
 import { pickItem, masteryOf, successChance, causeChain } from '../engine/recommender.js';
-import { masteryBand } from '../engine/mastery.js';
+import { masteryBand, BKT } from '../engine/mastery.js';
 import { feedbackFor } from '../engine/tutor.js';
 import { TOPIC_BY_ID, ITEMS_BY_TOPIC, UNLOCKS } from '../data/curriculum.js';
 
@@ -38,7 +38,7 @@ function ensure(topicId) {
 
 export function renderLearn(topicId) {
   const topic = TOPIC_BY_ID[topicId];
-  if (!topic) return html`<div class="page wrap"><h1>Тема не найдена</h1><a class="btn" href="#/dashboard">${t('cta.back')}</a></div>`;
+  if (!topic) return html`<div class="page wrap"><h1>${t('learn.notFound')}</h1><a class="btn" href="#/dashboard">${t('cta.back')}</a></div>`;
 
   const s = ensure(topicId);
   const p = getProfile();
@@ -66,7 +66,7 @@ export function renderLearn(topicId) {
 
       ${raw(topic.prereq.length ? `
         <div class="chain" style="margin-bottom:18px">
-          <span class="faint">Опирается на:</span>
+          <span class="faint">${t('learn.restsOn')}</span>
           ${topic.prereq.map((id) => `<a href="#/learn/${id}"><b>${loc(TOPIC_BY_ID[id])}</b></a> <span class="mono faint">${Math.round(masteryOf(p, id) * 100)}%</span>`).join('<span class="arrow">·</span>')}
         </div>` : '')}
 
@@ -109,12 +109,12 @@ export function renderLearn(topicId) {
                <button class="btn btn-ghost" data-act="learn-hint" ${s.hintLevel >= s.item.hints.length ? 'disabled' : ''}>
                  ${icon('hint', 16)} ${t('cta.hint')} ${s.hintLevel > 0 ? `(${s.hintLevel}/${s.item.hints.length})` : ''}
                </button>`)}
-          <a class="btn btn-ghost" href="#/tutor?q=${encodeURIComponent(loc(topic))}">Спросить репетитора</a>
+          <a class="btn btn-ghost" href="#/tutor?q=${encodeURIComponent(loc(topic))}">${t('graph.askTutor')}</a>
         </div>
       </div>
 
       <p class="faint" style="font-size:.8rem;margin-top:14px;text-align:center">
-        Подсказки не блокируют прогресс, но уменьшают начисляемый опыт: система поощряет самостоятельное решение.
+        ${t('learn.hintNote')}
       </p>
     </div>
   </div>`;
@@ -135,7 +135,7 @@ function feedbackBlock(s) {
     <div class="feedback ${fb.correct ? 'ok' : 'bad'}">
       <h4><span class="fb-mark">${icon(fb.correct ? 'check' : 'cross', 15)}</span> ${fb.title}
         ${s.gained ? `<span class="delta up">+${s.gained} XP</span>` : ''}
-        <span class="delta ${s.dPL >= 0 ? 'up' : 'down'}">P(освоено) ${s.dPL >= 0 ? '+' : ''}${(s.dPL * 100).toFixed(0)}%</span>
+        <span class="delta ${s.dPL >= 0 ? 'up' : 'down'}">${t('learn.pMastered')} ${s.dPL >= 0 ? '+' : ''}${(s.dPL * 100).toFixed(0)}%</span>
       </h4>
       ${fb.misconception ? `<p style="margin-bottom:8px"><strong style="color:var(--band-gap)">${t('learn.misconception')}:</strong> ${fb.misconception}</p>` : ''}
       <p><strong style="color:var(--text)">${t('learn.explain')}.</strong> ${fb.body}</p>
@@ -154,28 +154,27 @@ function renderSummary(topic, s, pL, band) {
   return html`
   <div class="page wrap">
     <div class="quiz">
-      <span class="label label-accent">Блок завершён</span>
+      <span class="label label-accent">${t('learn.blockDone')}</span>
       <h1 style="font-size:1.9rem;margin:14px 0 8px">${loc(topic)}</h1>
-      <p>${String(s.correct)} из ${String(s.solved)} верно · подсказок использовано: ${String(s.totalHints || 0)}</p>
+      <p>${tf('learn.ofCorrect', { a: s.correct, b: s.solved, h: s.totalHints || 0 })}</p>
 
       <div class="panel" style="margin-top:22px">
         <div style="display:flex;justify-content:space-between;font-size:.9rem;margin-bottom:8px">
-          <span>Освоение темы</span>
+          <span>${t('learn.topicMastery')}</span>
           <span class="mono">${String(Math.round(s.startPL * 100))}% → <strong style="color:var(--text)">${String(Math.round(pL * 100))}%</strong>
             <span class="delta ${gain >= 0 ? 'up' : 'down'}">${gain >= 0 ? '+' : ''}${(gain * 100).toFixed(0)}</span>
           </span>
         </div>
         <div class="bar bar-${band}"><i style="width:${(pL * 100).toFixed(0)}%"></i></div>
         <p style="font-size:.85rem;margin-top:12px">
-          Оценка обновлена моделью Bayesian Knowledge Tracing с учётом вероятности угадывания (${'22'}%) и случайной ошибки (10%).
-          Следующее повторение рекомендовано через ${String(p.mastery[topic.id]?.nextReviewDays ?? 3)} дн.
+          ${tf('learn.bktNote', { g: Math.round(BKT.p_guess * 100), s: Math.round(BKT.p_slip * 100), d: p.mastery[topic.id]?.nextReviewDays ?? 3 })}
         </p>
       </div>
 
       ${raw(unlocked.length ? `
         <div class="panel panel-accent" style="margin-top:18px">
-          <span class="label label-accent">Открыто</span>
-          <h3 style="margin:12px 0 8px">Тебе стали доступны новые темы</h3>
+          <span class="label label-accent">${t('learn.unlocked')}</span>
+          <h3 style="margin:12px 0 8px">${t('learn.unlockedH')}</h3>
           <div class="week-topics">
             ${unlocked.map((id) => `<a class="pill pill-strong" href="#/learn/${id}">${loc(TOPIC_BY_ID[id])} →</a>`).join('')}
           </div>
@@ -183,14 +182,14 @@ function renderSummary(topic, s, pL, band) {
 
       ${raw(chain.length > 1 ? `
         <div class="panel" style="margin-top:18px">
-          <h3 style="margin-bottom:10px">Что мешает двигаться дальше</h3>
+          <h3 style="margin-bottom:10px">${t('learn.blockedH')}</h3>
           <div class="chain">
             ${chain.map((id, i) => `${i ? '<span class="arrow">→</span>' : ''}<a href="#/learn/${id}"><b>${loc(TOPIC_BY_ID[id])}</b></a>`).join('')}
           </div>
         </div>` : '')}
 
       <div style="display:flex;gap:10px;margin-top:24px;flex-wrap:wrap">
-        <button class="btn btn-primary" data-act="learn-again">Ещё блок</button>
+        <button class="btn btn-primary" data-act="learn-again">${t('learn.again')}</button>
         <a class="btn btn-ghost" href="#/dashboard">${t('nav.dashboard')}</a>
         <a class="btn btn-ghost" href="#/graph">${t('graph.title')}</a>
       </div>
@@ -253,8 +252,8 @@ export function registerLearnActions(rerender) {
   });
 
   action('speak', () => {
-    if (!getSettings().tts) return toast('Озвучка выключена в настройках');
+    if (!getSettings().tts) return toast(t('learn.ttsOff'));
     const el = document.getElementById('stemText');
-    if (el && !speak(el.textContent, speechLocale())) toast('Браузер не поддерживает озвучку');
+    if (el && !speak(el.textContent, speechLocale())) toast(t('learn.ttsUnsupported'));
   });
 }

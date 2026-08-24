@@ -5,9 +5,8 @@ import { getProfile, update } from '../state.js';
 import { SUBJECTS, GOALS } from '../data/curriculum.js';
 
 const REGIONS = [
-  'Астана', 'Алматы', 'Шымкент', 'Туркестанская область', 'Кызылординская область',
-  'Актюбинская область', 'Жамбылская область', 'Восточно-Казахстанская область',
-  'Павлодарская область', 'Атырауская область', 'Другой регион',
+  'reg.astana', 'reg.almaty', 'reg.shymkent', 'reg.turkestan', 'reg.kyzylorda',
+  'reg.aktobe', 'reg.zhambyl', 'reg.vko', 'reg.pavlodar', 'reg.atyrau', 'reg.other',
 ];
 
 export function renderOnboarding() {
@@ -17,9 +16,9 @@ export function renderOnboarding() {
   <div class="page wrap" style="max-width:720px">
     <div class="page-head">
       <div>
-        <span class="label label-accent">Шаг 1 из 2</span>
+        <span class="label label-accent">${t('onb.step')}</span>
         <h1 style="font-size:2rem;margin-top:14px">${t('onb.title')}</h1>
-        <p style="margin-top:8px">Эти данные нужны движку персонализации: класс задаёт стартовую сложность, цель — приоритет тем, дата экзамена — плотность плана.</p>
+        <p style="margin-top:8px">${t('onb.lead')}</p>
       </div>
     </div>
 
@@ -27,7 +26,7 @@ export function renderOnboarding() {
       <div class="grid g2" style="gap:0 20px">
         <div class="field">
           <label for="f-name">${t('onb.name')}</label>
-          <input class="input" id="f-name" name="name" value="${p.name}" placeholder="Айгерім" autocomplete="given-name">
+          <input class="input" id="f-name" name="name" value="${p.name}" placeholder="${t('onb.namePh')}" autocomplete="given-name">
         </div>
         <div class="field">
           <label for="f-grade">${t('onb.grade')}</label>
@@ -41,12 +40,12 @@ export function renderOnboarding() {
         <div class="field">
           <label for="f-region">${t('onb.region')}</label>
           <select class="input" id="f-region" name="region">
-            ${raw(REGIONS.map((r) => `<option ${r === p.region ? 'selected' : ''}>${r}</option>`).join(''))}
+            ${raw(REGIONS.map((r) => `<option value="${r}" ${r === p.region ? 'selected' : ''}>${t(r)}</option>`).join(''))}
           </select>
         </div>
         <div class="field">
           <label for="f-school">${t('onb.school')}</label>
-          <input class="input" id="f-school" name="school" value="${p.school}" placeholder="Средняя школа №12">
+          <input class="input" id="f-school" name="school" value="${p.school}" placeholder="${t('onb.schoolPh')}">
         </div>
       </div>
 
@@ -73,7 +72,7 @@ export function renderOnboarding() {
       <div class="field">
         <label for="f-exam">${t('onb.exam')}</label>
         <input class="input" id="f-exam" name="examDate" type="date" value="${p.examDate}">
-        <span class="faint" style="font-size:.8rem">Необязательно. Если указать — план подготовки автоматически уложится в оставшееся время.</span>
+        <span class="faint" style="font-size:.8rem">${t('onb.examNote')}</span>
       </div>
 
       <button class="btn btn-primary btn-block" type="submit" style="margin-top:10px">
@@ -102,7 +101,7 @@ export function registerOnboardingActions(navigate) {
   action('onb-submit', (_d, form) => {
     const data = new FormData(form);
     update((s) => {
-      s.profile.name = (data.get('name') || '').toString().trim() || 'Ученик';
+      s.profile.name = (data.get('name') || '').toString().trim() || t('onb.defaultName');
       s.profile.grade = Number(data.get('grade'));
       s.profile.region = data.get('region');
       s.profile.school = data.get('school');
@@ -111,7 +110,7 @@ export function registerOnboardingActions(navigate) {
       if (!s.profile.attempts) s.profile.theta = (s.profile.grade - 9) * 0.22;
       s.ui.onboarded = true;
     });
-    toast('Профиль сохранён');
+    toast(t('app.profileSaved'));
     navigate('/diagnostic');
   });
 }

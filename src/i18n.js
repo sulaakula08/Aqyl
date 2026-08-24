@@ -1,138 +1,33 @@
 /**
  * Мультиязычность: қазақша / русский / English.
+ *
  * В Казахстане это не «бонусная фича», а условие доступности: в сельских
  * школах обучение часто идёт на казахском, а качественных цифровых
  * материалов на нём кратно меньше.
+ *
+ * Словари вынесены в три отдельных файла по языку, а не сложены в один
+ * объект с чередованием. Так носитель языка может прочитать свой файл
+ * подряд и вычитать формулировки, не выуживая их из-под двух других
+ * языков, — а расхождение в наборе ключей ловится проверкой ниже.
  */
 
 import { lang } from './state.js';
+import { ru } from './i18n/ru.js';
+import { kk } from './i18n/kk.js';
+import { en } from './i18n/en.js';
 
 // Реэкспорт: страницам удобнее брать и словарь, и текущий язык из одного модуля.
 export { lang };
 
-const DICT = {
-  ru: {
-    'nav.home': 'Главная', 'nav.dashboard': 'Кабинет', 'nav.graph': 'Карта знаний',
-    'nav.tutor': 'AI-репетитор', 'nav.teacher': 'Учителю', 'nav.plan': 'План',
-    'cta.start': 'Начать обучение', 'cta.diagnostic': 'Пройти диагностику',
-    'cta.continue': 'Продолжить', 'cta.next': 'Далее', 'cta.check': 'Проверить',
-    'cta.hint': 'Подсказка', 'cta.explain': 'Объяснить', 'cta.practice': 'Практиковать',
-    'cta.finish': 'Завершить', 'cta.back': 'Назад', 'cta.skip': 'Пропустить',
-    'hero.kicker': 'AI-репетитор для каждой школы Казахстана',
-    'hero.title': 'Твой уровень — не приговор. Это стартовая точка.',
-    'hero.sub': 'AQYL находит настоящую причину пробела в знаниях, а не симптом. Персональный план, объяснимый ИИ и работа без интернета — для школ, где его почти нет.',
-    'stat.students': 'школьников в Казахстане', 'stat.gap': 'разрыв село / город в PISA',
-    'stat.tutors': 'семей не могут позволить репетитора', 'stat.teachers': 'учеников на одного учителя',
-    'sec.how': 'Как это работает', 'sec.why': 'Почему это не ещё один сборник задач',
-    'onb.title': 'Расскажи о себе', 'onb.grade': 'Класс', 'onb.subject': 'Предметы',
-    'onb.goal': 'Цель обучения', 'onb.exam': 'Дата экзамена', 'onb.name': 'Имя',
-    'onb.region': 'Регион', 'onb.school': 'Школа',
-    'diag.title': 'Адаптивная диагностика', 'diag.sub': 'Вопросы подстраиваются под твои ответы. 8 заданий — и мы знаем, где пробел.',
-    'diag.q': 'Вопрос', 'diag.of': 'из', 'diag.result': 'Твоя стартовая карта знаний',
-    'dash.hi': 'Привет', 'dash.solved': 'решённых заданий', 'dash.topicsOf': 'освоено {a} из {b} тем',
-    'dash.gate': 'Сначала — диагностика', 'dash.gateSub': 'Чтобы построить персональный маршрут, системе нужно 8 ответов. Это займёт около трёх минут.',
-    'dash.level': 'Уровень', 'dash.xp': 'Опыт', 'dash.streak': 'Дней подряд',
-    'dash.next': 'Что делать дальше', 'dash.weak': 'Слабые места', 'dash.progress': 'Прогресс по темам',
-    'dash.deadline': 'До экзамена', 'dash.days': 'дн.', 'dash.badges': 'Достижения',
-    'why.gap': 'Пробел в знаниях', 'why.blocked': 'Не хватает базы', 'why.goal': 'Ведёт к твоей цели',
-    'why.leverage': 'Откроет новые темы', 'why.review': 'Пора повторить',
-    'band.mastered': 'Освоено', 'band.strong': 'Уверенно', 'band.developing': 'В процессе', 'band.gap': 'Пробел',
-    'learn.correct': 'Верно', 'learn.wrong': 'Пока не то', 'learn.explain': 'Разбор',
-    'learn.misconception': 'Типичная ошибка', 'learn.chance': 'Шанс справиться',
-    'teacher.title': 'Панель учителя', 'teacher.risk': 'Требуют внимания',
-    'teacher.heatmap': 'Карта класса', 'teacher.add': 'Добавить модуль',
-    'teacher.insight': 'Вывод ИИ по классу', 'teacher.students': 'учеников',
-    'tutor.title': 'AI-репетитор', 'tutor.placeholder': 'Спроси про любую тему…',
-    'tutor.offline': 'Офлайн-режим', 'tutor.cloud': 'Claude API',
-    'graph.title': 'Карта знаний', 'graph.sub': 'Каждая тема опирается на предыдущие. Нажми на узел, чтобы увидеть путь.',
-    'plan.title': 'Индивидуальный план', 'plan.week': 'Неделя', 'plan.hours': 'ч',
-    'plan.ontrack': 'Ты успеваешь к экзамену', 'plan.behind': 'При текущем темпе не успеваешь',
-    'common.mastery': 'освоено', 'common.topic': 'Тема', 'common.grade': 'класс',
-    'common.reset': 'Сбросить прогресс', 'common.settings': 'Настройки', 'common.listen': 'Прослушать',
-  },
-  kk: {
-    'nav.home': 'Басты бет', 'nav.dashboard': 'Кабинет', 'nav.graph': 'Білім картасы',
-    'nav.tutor': 'AI-ұстаз', 'nav.teacher': 'Мұғалімге', 'nav.plan': 'Жоспар',
-    'cta.start': 'Оқуды бастау', 'cta.diagnostic': 'Диагностикадан өту',
-    'cta.continue': 'Жалғастыру', 'cta.next': 'Әрі қарай', 'cta.check': 'Тексеру',
-    'cta.hint': 'Нұсқау', 'cta.explain': 'Түсіндіру', 'cta.practice': 'Жаттығу',
-    'cta.finish': 'Аяқтау', 'cta.back': 'Артқа', 'cta.skip': 'Өткізу',
-    'hero.kicker': 'Қазақстанның әр мектебіне арналған AI-ұстаз',
-    'hero.title': 'Деңгейің — үкім емес. Бұл — бастау нүктесі.',
-    'hero.sub': 'AQYL білім олқылығының салдарын емес, нақты себебін табады. Жеке жоспар, түсіндірілетін ИИ және интернетсіз жұмыс.',
-    'stat.students': 'оқушы Қазақстанда', 'stat.gap': 'ауыл мен қала арасындағы PISA айырмасы',
-    'stat.tutors': 'отбасы репетитор жалдай алмайды', 'stat.teachers': 'оқушыға бір мұғалім',
-    'sec.how': 'Қалай жұмыс істейді', 'sec.why': 'Неге бұл жай есептер жинағы емес',
-    'onb.title': 'Өзің туралы айт', 'onb.grade': 'Сынып', 'onb.subject': 'Пәндер',
-    'onb.goal': 'Оқу мақсаты', 'onb.exam': 'Емтихан күні', 'onb.name': 'Аты',
-    'onb.region': 'Өңір', 'onb.school': 'Мектеп',
-    'diag.title': 'Бейімделетін диагностика', 'diag.sub': 'Сұрақтар жауабыңа қарай өзгереді. 8 тапсырма — және олқылық анықталады.',
-    'diag.q': 'Сұрақ', 'diag.of': '/', 'diag.result': 'Бастапқы білім картаң',
-    'dash.hi': 'Сәлем', 'dash.solved': 'шешілген тапсырма', 'dash.topicsOf': '{b} тақырыптың {a}-і игерілді',
-    'dash.gate': 'Алдымен — диагностика', 'dash.gateSub': 'Жеке маршрут құру үшін жүйеге 8 жауап қажет. Бұл шамамен үш минут алады.',
-    'dash.level': 'Деңгей', 'dash.xp': 'Тәжірибе', 'dash.streak': 'Қатарынан күн',
-    'dash.next': 'Әрі қарай не істеу керек', 'dash.weak': 'Осал тұстар', 'dash.progress': 'Тақырыптар бойынша прогресс',
-    'dash.deadline': 'Емтиханға дейін', 'dash.days': 'күн', 'dash.badges': 'Жетістіктер',
-    'why.gap': 'Білім олқылығы', 'why.blocked': 'Негіз жетіспейді', 'why.goal': 'Мақсатыңа апарады',
-    'why.leverage': 'Жаңа тақырыптар ашады', 'why.review': 'Қайталау уақыты',
-    'band.mastered': 'Игерілді', 'band.strong': 'Сенімді', 'band.developing': 'Үдерісте', 'band.gap': 'Олқылық',
-    'learn.correct': 'Дұрыс', 'learn.wrong': 'Әзірге дұрыс емес', 'learn.explain': 'Талдау',
-    'learn.misconception': 'Жиі кездесетін қате', 'learn.chance': 'Сәттілік мүмкіндігі',
-    'teacher.title': 'Мұғалім панелі', 'teacher.risk': 'Назар аудару қажет',
-    'teacher.heatmap': 'Сынып картасы', 'teacher.add': 'Модуль қосу',
-    'teacher.insight': 'Сынып бойынша ИИ қорытындысы', 'teacher.students': 'оқушы',
-    'tutor.title': 'AI-ұстаз', 'tutor.placeholder': 'Кез келген тақырыпты сұра…',
-    'tutor.offline': 'Офлайн режим', 'tutor.cloud': 'Claude API',
-    'graph.title': 'Білім картасы', 'graph.sub': 'Әр тақырып алдыңғысына сүйенеді. Жолды көру үшін түйінді бас.',
-    'plan.title': 'Жеке жоспар', 'plan.week': 'Апта', 'plan.hours': 'сағ',
-    'plan.ontrack': 'Емтиханға үлгересің', 'plan.behind': 'Қазіргі қарқынмен үлгермейсің',
-    'common.mastery': 'игерілді', 'common.topic': 'Тақырып', 'common.grade': 'сынып',
-    'common.reset': 'Прогресті тазалау', 'common.settings': 'Баптаулар', 'common.listen': 'Тыңдау',
-  },
-  en: {
-    'nav.home': 'Home', 'nav.dashboard': 'Dashboard', 'nav.graph': 'Knowledge map',
-    'nav.tutor': 'AI tutor', 'nav.teacher': 'Teacher', 'nav.plan': 'Plan',
-    'cta.start': 'Start learning', 'cta.diagnostic': 'Take diagnostic',
-    'cta.continue': 'Continue', 'cta.next': 'Next', 'cta.check': 'Check',
-    'cta.hint': 'Hint', 'cta.explain': 'Explain', 'cta.practice': 'Practice',
-    'cta.finish': 'Finish', 'cta.back': 'Back', 'cta.skip': 'Skip',
-    'hero.kicker': 'An AI tutor for every school in Kazakhstan',
-    'hero.title': 'Your level is not a verdict. It is a starting point.',
-    'hero.sub': 'AQYL finds the real cause of a knowledge gap, not the symptom. A personal plan, explainable AI, and full offline operation.',
-    'stat.students': 'school students in Kazakhstan', 'stat.gap': 'rural / urban PISA gap',
-    'stat.tutors': 'of families cannot afford a tutor', 'stat.teachers': 'students per teacher',
-    'sec.how': 'How it works', 'sec.why': 'Why this is not another problem set',
-    'onb.title': 'Tell us about yourself', 'onb.grade': 'Grade', 'onb.subject': 'Subjects',
-    'onb.goal': 'Learning goal', 'onb.exam': 'Exam date', 'onb.name': 'Name',
-    'onb.region': 'Region', 'onb.school': 'School',
-    'diag.title': 'Adaptive diagnostic', 'diag.sub': 'Questions adapt to your answers. 8 tasks to locate the gap.',
-    'diag.q': 'Question', 'diag.of': 'of', 'diag.result': 'Your starting knowledge map',
-    'dash.hi': 'Hi', 'dash.solved': 'tasks solved', 'dash.topicsOf': '{a} of {b} topics mastered',
-    'dash.gate': 'Diagnostic first', 'dash.gateSub': 'The system needs 8 answers to build your route. It takes about three minutes.',
-    'dash.level': 'Level', 'dash.xp': 'XP', 'dash.streak': 'Day streak',
-    'dash.next': 'What to do next', 'dash.weak': 'Weak spots', 'dash.progress': 'Topic progress',
-    'dash.deadline': 'Until exam', 'dash.days': 'd', 'dash.badges': 'Badges',
-    'why.gap': 'Knowledge gap', 'why.blocked': 'Missing foundation', 'why.goal': 'Leads to your goal',
-    'why.leverage': 'Unlocks new topics', 'why.review': 'Time to review',
-    'band.mastered': 'Mastered', 'band.strong': 'Strong', 'band.developing': 'Developing', 'band.gap': 'Gap',
-    'learn.correct': 'Correct', 'learn.wrong': 'Not quite', 'learn.explain': 'Walkthrough',
-    'learn.misconception': 'Common mistake', 'learn.chance': 'Success chance',
-    'teacher.title': 'Teacher dashboard', 'teacher.risk': 'Need attention',
-    'teacher.heatmap': 'Class map', 'teacher.add': 'Add module',
-    'teacher.insight': 'AI class insight', 'teacher.students': 'students',
-    'tutor.title': 'AI tutor', 'tutor.placeholder': 'Ask about any topic…',
-    'tutor.offline': 'Offline mode', 'tutor.cloud': 'Claude API',
-    'graph.title': 'Knowledge map', 'graph.sub': 'Each topic builds on earlier ones. Tap a node to see the path.',
-    'plan.title': 'Personal plan', 'plan.week': 'Week', 'plan.hours': 'h',
-    'plan.ontrack': 'You are on track', 'plan.behind': 'Behind schedule at current pace',
-    'common.mastery': 'mastered', 'common.topic': 'Topic', 'common.grade': 'grade',
-    'common.reset': 'Reset progress', 'common.settings': 'Settings', 'common.listen': 'Listen',
-  },
-};
+const DICT = { ru, kk, en };
 
+/**
+ * Русский — опорный язык: он заполнен всегда, с него делались переводы.
+ * Недостающий ключ в kk/en не роняет экран, а тихо откатывается на ru,
+ * поэтому незаконченный перевод выглядит как смесь языков, а не как дыра.
+ */
 export function t(key) {
-  const l = lang();
-  return DICT[l]?.[key] ?? DICT.ru[key] ?? key;
+  return DICT[lang()]?.[key] ?? ru[key] ?? key;
 }
 
 /** Строка с подстановкой: tf('dash.topicsOf', { a: 3, b: 11 }). */
@@ -140,10 +35,50 @@ export function tf(key, vars = {}) {
   return t(key).replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? ''));
 }
 
-/** Локализованное поле объекта вида { ru, kk, en }. */
+/** Локализованное поле объекта вида { ru, kk, en } — для учебного контента. */
 export function loc(obj, fallbackKey = 'ru') {
   if (!obj) return '';
   return obj[lang()] || obj[fallbackKey] || '';
+}
+
+/**
+ * Русское склонение по числу: 1 попытка, 2 попытки, 5 попыток.
+ * Живёт здесь, а не в конкретном экране, потому что нужно и кабинету,
+ * и панели учителя.
+ */
+export function plural(n, one, few, many) {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+  return many;
+}
+
+/**
+ * Склонение по текущему языку.
+ *
+ * В казахском и английском форма существительного после числа не меняется
+ * («8 сұрақ», «8 questions»), поэтому берётся первая форма для kk и вторая
+ * для en; развесистые правила русского нужны только русскому.
+ */
+export function pl(n, forms) {
+  if (lang() === 'ru') return plural(n, forms.ru[0], forms.ru[1], forms.ru[2]);
+  return forms[lang()] || forms.ru[2];
+}
+
+/**
+ * Склонение по словарю: plt(3, 'pl.week') → «недели».
+ *
+ * Формы живут в словарях, а не в коде экрана, иначе переводчику пришлось бы
+ * лезть в JS. У русского три формы, у казахского и английского счётная форма
+ * одна — она хранится под ключом `.other`, и остальные три там продублированы
+ * только ради совпадения набора ключей во всех трёх файлах.
+ */
+export function plt(n, base) {
+  const l = lang();
+  if (l === 'ru') return plural(n, t(base + '.one'), t(base + '.few'), t(base + '.many'));
+  // В английском форм две, в казахском счётная форма одна и не меняется.
+  if (l === 'en') return n === 1 ? t(base + '.one') : t(base + '.other');
+  return t(base + '.other');
 }
 
 export const LANGS = [
@@ -154,3 +89,6 @@ export const LANGS = [
 
 /** Код языка для Web Speech API (озвучка для учеников с трудностями чтения). */
 export const speechLocale = () => ({ kk: 'kk-KZ', ru: 'ru-RU', en: 'en-US' }[lang()] || 'ru-RU');
+
+/** Локаль для дат: план подготовки печатает названия месяцев. */
+export const dateLocale = () => ({ kk: 'kk-KZ', ru: 'ru-RU', en: 'en-GB' }[lang()] || 'ru-RU');

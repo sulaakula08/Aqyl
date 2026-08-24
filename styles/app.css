@@ -399,7 +399,7 @@ body.nav-locked { overflow: hidden; }
 .faq details > p { padding: 0 60px 22px 0; font-size: 0.95rem; margin-top: -4px; }
 
 /* ─── Страницы приложения ───────────────────────────────────────────────── */
-.page { padding: 40px 0 88px; }
+.page { padding-block: 40px 88px; }
 
 .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; padding-bottom: 22px; margin-bottom: 26px; border-bottom: 1px solid var(--rule); }
 .page-head h1 { font-size: clamp(1.7rem, 3.4vw, 2.3rem); }
@@ -533,11 +533,24 @@ textarea.input { resize: vertical; }
 
 /* ─── Панель учителя ────────────────────────────────────────────────────── */
 .heat-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: var(--r-md); background: var(--surface); }
-.heat { border-collapse: separate; border-spacing: 2px; font-size: 0.78rem; padding: 12px; min-width: 760px; }
+/* table-layout: fixed + width:100% — иначе колонка имён забирала всю свободную
+   ширину (381 px при нужных ~150), а сетка ужималась до трети карточки.
+   min-width оставляет горизонтальную прокрутку на узком экране. */
+.heat { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 2px; font-size: 0.78rem; padding: 12px; min-width: 720px; }
 .heat th { font-weight: 500; color: var(--text-faint); text-align: left; padding: 4px 6px; font-size: 0.7rem; }
-.heat th.rot { writing-mode: vertical-rl; transform: rotate(180deg); height: 116px; white-space: nowrap; vertical-align: bottom; font-family: var(--font-mono); letter-spacing: 0.02em; }
-.heat td.nm { color: var(--text-dim); white-space: nowrap; padding-right: 10px; font-size: 0.8rem; }
-.heat td.cell { width: 28px; height: 26px; border-radius: 2px; cursor: pointer; transition: outline-color 0.12s var(--ease); outline: 1px solid transparent; }
+.heat th.nm-h { width: 150px; }
+/* Заголовки больше не повёрнуты: после того как сетка стала занимать всю
+   ширину карточки, на колонку приходится ~85 px — название темы переносится
+   в две-три строки и читается без наклона головы. Повёрнутый текст здесь
+   был вынужденной мерой узкой колонки, а не решением. */
+.heat th.rot { vertical-align: bottom; padding: 0 3px 8px; text-align: center; }
+.heat th.rot > span {
+  display: block; line-height: 1.25; hyphens: auto;
+  font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.01em;
+}
+.heat th.nm { color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding-right: 10px; font-size: 0.8rem; font-weight: 500; text-align: left; }
+.heat td.cell { height: 26px; border-radius: 2px; cursor: pointer; transition: outline-color 0.12s var(--ease); outline: 1px solid transparent; }
 .heat td.cell:hover { outline-color: var(--text); }
 
 .risk-row { display: flex; align-items: center; gap: 13px; padding: 13px 0; border-top: 1px solid var(--rule); }
@@ -603,6 +616,11 @@ textarea.input { resize: vertical; }
 .sheet { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px; background: rgba(20, 20, 15, 0.5); backdrop-filter: blur(3px); animation: fade 0.2s var(--ease) both; }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 .sheet-card { width: min(520px, 100%); max-height: 86vh; overflow-y: auto; background: var(--bg-soft); border: 1px solid var(--rule-strong); border-radius: var(--r-md); padding: 26px; box-shadow: var(--shadow-2); }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
 
 .skip-link { position: absolute; left: -9999px; }
 .skip-link:focus { left: 12px; top: 12px; z-index: 200; background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: var(--r-sm); }

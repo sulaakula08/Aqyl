@@ -35,7 +35,7 @@ const navEndEl = document.getElementById('navEnd');
  * плотности и разной иерархии.
  */
 const NAV_SITE = [
-  { path: '/method', label: { ru: 'Как устроен ИИ', kk: 'ИИ қалай жұмыс істейді', en: 'How the AI works' } },
+  { path: '/method', key: 'app.methodNav' },
   { path: '/graph', key: 'nav.graph' },
   { path: '/teacher', key: 'nav.teacher' },
 ];
@@ -80,9 +80,9 @@ function view() {
 function notFound() {
   return html`
     <div class="page wrap center" style="max-width:520px">
-      <h1 style="font-size:2rem">Страница не найдена</h1>
-      <p style="margin:12px 0 22px">Возможно, ссылка устарела.</p>
-      <a class="btn btn-primary" href="#/">На главную</a>
+      <h1 style="font-size:2rem">${t('app.notFound')}</h1>
+      <p style="margin:12px 0 22px">${t('app.notFoundSub')}</p>
+      <a class="btn btn-primary" href="#/">${t('app.toHome')}</a>
     </div>`;
 }
 
@@ -99,6 +99,7 @@ function render() {
 
   const { path, params } = parseHash();
   if (path.startsWith('/tutor') && params.get('q')) flushPending(rerender);
+  applyStaticI18n();
   document.documentElement.lang = getState().settings.lang;
 }
 
@@ -115,6 +116,20 @@ const langButtons = (lang) => LANGS
                        aria-pressed="${lang === l.id}">${l.label}</button>`)
   .join('');
 
+/**
+ * Перевод статической разметки index.html.
+ *
+ * Шапка, подвал и служебные подписи живут в HTML, а не в шаблонах экранов,
+ * поэтому переводятся здесь по data-атрибутам. В самом HTML остаётся русский
+ * текст: так страница читается и до загрузки модулей, и в поиске.
+ */
+function applyStaticI18n() {
+  document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-aria]').forEach((el) => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
+  document.querySelectorAll('[data-i18n-title]').forEach((el) => { el.setAttribute('title', t(el.dataset.i18nTitle)); });
+  document.querySelectorAll('[data-i18n-content]').forEach((el) => { el.setAttribute('content', t(el.dataset.i18nContent)); });
+}
+
 function renderNav() {
   const { path } = parseHash();
   const isSite = SITE_ROUTES.has(path);
@@ -129,7 +144,7 @@ function renderNav() {
 
   const links = items
     .map((n, i) => {
-      const label = n.key ? t(n.key) : (n.label[lang] || n.label.ru);
+      const label = t(n.key);
       const current = path === n.path ? ' aria-current="page"' : '';
       return `<a href="#${n.path}" class="${path === n.path ? 'active' : ''}"${current} style="--i:${i}">${label}</a>`;
     })
@@ -140,7 +155,7 @@ function renderNav() {
      поэтому они переезжают сюда, а не сжимаются до нечитаемых огрызков. */
   navEl.innerHTML = `${links}
     <div class="nav-foot">
-      <div class="lang-switch" role="group" aria-label="Язык интерфейса">${langButtons(lang)}</div>
+      <div class="lang-switch" role="group" aria-label="${t('app.langLabel')}">${langButtons(lang)}</div>
       <a class="btn btn-primary btn-block" href="${cta.href}">${cta.label}</a>
     </div>`;
 
@@ -157,16 +172,16 @@ function renderNav() {
 
 action('lang', ({ id }) => {
   setLang(id);
-  toast(id === 'kk' ? 'Тіл: қазақша' : id === 'en' ? 'Language: English' : 'Язык: русский');
+  toast(t('app.langToast'));
   render();
 });
 
 action('reset', () => {
-  if (!confirm('Сбросить весь прогресс и демо-данные класса?')) return;
+  if (!confirm(t('app.resetConfirm'))) return;
   resetDiagnostic();
   resetLearn();
   resetProgress();
-  toast('Прогресс сброшен');
+  toast(t('app.resetDone'));
   navigate('/');
   render();
 });
@@ -237,7 +252,7 @@ onScroll();
 const netFlag = document.getElementById('netFlag');
 function updateNet() {
   const on = navigator.onLine;
-  netFlag.innerHTML = on ? '<i></i> online' : '<i></i> offline — приложение работает';
+  netFlag.innerHTML = `<i></i> ${on ? t('app.online') : t('app.offline')}`;
   netFlag.classList.toggle('off', !on);
 }
 window.addEventListener('online', updateNet);
