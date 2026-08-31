@@ -86,6 +86,15 @@ function notFound() {
     </div>`;
 }
 
+/**
+ * Шапка отрывается от края, как только страница уехала вниз.
+ * Функция, а не стрелка в const: её вызывает render(), объявленный выше,
+ * и объявление функции поднимается, а const остался бы в мёртвой зоне.
+ */
+function syncTopbar() {
+  document.querySelector('.topbar').classList.toggle('scrolled', window.scrollY > 4);
+}
+
 let scrollTopOnNext = true;
 
 function render() {
@@ -96,6 +105,11 @@ function render() {
   // Разметка движения — после вставки разметки, до того как браузер отрисует
   // кадр: иначе полосы успели бы мелькнуть на финальном значении.
   initMotion(main);
+
+  // Состояние шапки пересчитывается явно, а не ждёт события scroll.
+  // При переходе на короткий экран прокрутка сбрасывается в ноль без события,
+  // и шапка иначе осталась бы висеть в «плавающем» виде на самом верху.
+  syncTopbar();
 
   const { path, params } = parseHash();
   if (path.startsWith('/tutor') && params.get('q')) flushPending(rerender);
@@ -244,9 +258,8 @@ document.addEventListener('keydown', (e) => {
 window.matchMedia('(min-width: 861px)').addEventListener('change', (m) => { if (m.matches) setNav(false); });
 
 // Тень под шапкой появляется только когда под ней действительно есть контент.
-const onScroll = () => document.querySelector('.topbar').classList.toggle('scrolled', window.scrollY > 4);
-window.addEventListener('scroll', onScroll, { passive: true });
-onScroll();
+window.addEventListener('scroll', syncTopbar, { passive: true });
+syncTopbar();
 
 // Индикатор сети: демонстрирует, что офлайн ничего не ломает.
 const netFlag = document.getElementById('netFlag');

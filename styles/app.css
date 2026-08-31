@@ -95,18 +95,65 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .feedback.bad .fb-mark { color: var(--band-gap); }
 .legend-lock .ic { margin-right: 5px; }
 
-/* ─── Шапка ─────────────────────────────────────────────────────────────── */
+/* ─── Шапка ───────────────────────────────────────────────────────────────
+   У шапки два состояния.
+
+   В покое это часть листа: во всю ширину, без фона, отделена одной линейкой.
+   Как только страница уехала вниз, она отрывается от края и превращается
+   в плавающую панель — сдвигается вниз, скругляется, поджимается по бокам
+   и становится полупрозрачной, чтобы содержимое было видно сквозь неё.
+
+   Смысл не декоративный: пока не прокручено, шапке незачем заявлять о себе.
+   Отрыв от края — это и есть сообщение «страница под тобой поехала»,
+   и оно приходит раньше, чем читатель заметит полосу прокрутки.
+
+   Сдвиг сделан через transform, а не через отступ: он не вызывает
+   перекомпоновку и не может схлопнуться с внешними полями. */
 .topbar {
   position: sticky; top: 0; z-index: 60;
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--rule);
-  transition: box-shadow 0.2s var(--ease), border-color 0.2s var(--ease);
+  transition:
+    background 0.3s var(--ease), border-color 0.3s var(--ease),
+    backdrop-filter 0.3s var(--ease);
 }
-/* Пока страница не прокручена, шапка — просто линейка на бумаге.
-   Тень появляется, только когда под шапку что-то уехало. */
-.topbar.scrolled { border-bottom-color: var(--rule-strong); box-shadow: 0 6px 20px -18px rgba(20, 20, 15, 0.55); }
-.topbar-inner { display: flex; align-items: center; gap: 14px; height: 64px; }
+.topbar-inner {
+  display: flex; align-items: center; gap: 14px; height: 64px;
+  border: 1px solid transparent; border-radius: 0;
+  transition:
+    transform 0.34s var(--ease-out), height 0.3s var(--ease-out),
+    max-width 0.34s var(--ease-out), padding 0.3s var(--ease-out),
+    background 0.3s var(--ease), border-color 0.3s var(--ease),
+    border-radius 0.3s var(--ease), box-shadow 0.3s var(--ease);
+}
+
+/* Прокручено: фон уезжает с самой шапки на внутреннюю панель. */
+.topbar.scrolled {
+  background: transparent;
+  border-bottom-color: transparent;
+  backdrop-filter: none;
+}
+.topbar.scrolled .topbar-inner {
+  transform: translateY(9px);
+  height: 54px;
+  /* Поджатие по бокам считается от меньшего из двух: сетки и вьюпорта.
+     Иначе на экранах уже 1200 px панель упиралась бы в края и скругление
+     было бы не видно. */
+  max-width: min(calc(var(--maxw) - 40px), calc(100% - 22px));
+  padding-inline: 18px;
+  border-radius: 14px;
+  border-color: var(--rule);
+  /* Полупрозрачность плюс размытие: текст под панелью угадывается,
+     но не мешает читать пункты меню. */
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  backdrop-filter: blur(16px) saturate(1.4);
+  box-shadow: 0 10px 30px -18px rgba(20, 20, 15, 0.5), var(--shadow-1);
+}
+[data-theme='dark'] .topbar.scrolled .topbar-inner {
+  background: color-mix(in srgb, var(--bg) 66%, transparent);
+  box-shadow: 0 10px 30px -16px rgba(0, 0, 0, 0.8);
+}
 
 /* Фон не прокручивается, пока открыто выдвижное меню. */
 body.nav-locked { overflow: hidden; }
@@ -668,6 +715,13 @@ textarea.input { resize: vertical; }
   .nav-foot { display: grid; gap: 12px; margin-top: 14px; padding-top: 16px; border-top: 1px solid var(--rule-strong); }
   .nav-foot .lang-switch { justify-self: start; }
   .nav-foot .lang-switch button { padding: 8px 14px; font-size: 0.72rem; }
+
+  /* На узком экране панель прижимается ближе к краю и скругляется мягче:
+     крупный радиус на всю ширину экрана читается как пузырь, а не как шапка. */
+  .topbar.scrolled .topbar-inner {
+    transform: translateY(7px); height: 52px;
+    max-width: calc(100% - 16px); border-radius: 12px; padding-inline: 14px;
+  }
 
   .topbar-sep { display: none; }
   .level-chip { display: none; }

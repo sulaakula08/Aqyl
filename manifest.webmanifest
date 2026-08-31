@@ -12,13 +12,13 @@
   "categories": ["education"],
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='44' fill='%23070a14'/%3E%3Cpath d='M96 36l48 120h-24l-9.6-24H81.6L72 156H48L96 36zm0 45l-10.8 27h21.6L96 81z' fill='%23f0b429'/%3E%3C/svg%3E",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='44' fill='%2314140f'/%3E%3Cg transform='translate(19.2 19.2) scale(0.8)'%3E%3Cg fill='none' stroke='%23e3ab41' stroke-width='19.5' stroke-linecap='round'%3E%3Cpath d='M130.2 55.8 109.8 77.4'/%3E%3Cpath d='M82.2 108.6 61.8 130.2'/%3E%3Ccircle cx='144.0' cy='42.0' r='19.2'/%3E%3Ccircle cx='96.0' cy='93.0' r='19.2'/%3E%3C/g%3E%3Ccircle cx='48.0' cy='144.0' r='26.4' fill='%23e3ab41'/%3E%3C/g%3E%3C/svg%3E",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='116' fill='%23070a14'/%3E%3Cpath d='M256 96l128 320h-64l-25.6-64H217.6L192 416h-64L256 96zm0 120l-28.8 72h57.6L256 216z' fill='%23f0b429'/%3E%3C/svg%3E",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='116' fill='%2314140f'/%3E%3Cg transform='translate(51.2 51.2) scale(0.8)'%3E%3Cg fill='none' stroke='%23e3ab41' stroke-width='52.0' stroke-linecap='round'%3E%3Cpath d='M347.2 148.8 292.8 206.4'/%3E%3Cpath d='M219.2 289.6 164.8 347.2'/%3E%3Ccircle cx='384.0' cy='112.0' r='51.2'/%3E%3Ccircle cx='256.0' cy='248.0' r='51.2'/%3E%3C/g%3E%3Ccircle cx='128.0' cy='384.0' r='70.4' fill='%23e3ab41'/%3E%3C/g%3E%3C/svg%3E",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any"

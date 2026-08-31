@@ -7,7 +7,7 @@
  * интернет бывает нестабильным или почасовым.
  */
 
-const CACHE = 'aqyl-v5';
+const CACHE = 'aqyl-v6';
 
 const ASSETS = [
   './',
