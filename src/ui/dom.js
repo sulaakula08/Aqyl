@@ -46,6 +46,15 @@ export function initDelegation(root) {
   root.addEventListener('click', (e) => {
     const el = e.target.closest('[data-act]');
     if (!el) return;
+    /*
+     * closest() ищет ВВЕРХ по дереву, а у формы data-act относится к отправке,
+     * а не к клику. Без этой проверки любой клик внутри формы по месту,
+     * где нет своего data-act, — по подписи поля, по отступу, по пустому месту —
+     * доходил до формы и запускал её обработчик. В онбординге это значило:
+     * клик по слову «ПРЕДМЕТЫ» сохранял полупустой профиль и уводил на диагностику.
+     * Кнопка type="submit" при этом работает как обычно — через событие submit ниже.
+     */
+    if (el.tagName === 'FORM') return;
     const fn = handlers.get(el.dataset.act);
     if (fn) { e.preventDefault(); fn(el.dataset, el, e); }
   });

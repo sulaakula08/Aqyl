@@ -211,7 +211,7 @@ export function renderTeacher() {
 function addSheet() {
   return `
   <div class="sheet" data-act="teach-add-close">
-    <form class="sheet-card" data-act="teach-add-submit" onclick="event.stopPropagation()">
+    <form class="sheet-card" data-act="teach-add-submit">
       <h3 style="margin-bottom:6px">${t('teacher.add')}</h3>
       <p style="font-size:.88rem;margin-bottom:18px">${t('teacher.addNote')}</p>
 
