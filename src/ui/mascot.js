@@ -175,6 +175,8 @@ export const mascot = {
     const i = ensure();
     if (!i) return;
     floating = true;
+    // Снимаем «прибитый» transform: в полёте он и есть способ передвижения.
+    i.el.style.removeProperty('transform');
     layer().appendChild(i.el);
     i.el.className = `mascot mascot-${size} mascot-floating`;
   },

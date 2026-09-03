@@ -3,7 +3,7 @@ import { icon, iconGlyph } from './icons.js';
 import { mascot } from './mascot.js';
 import { t, tf, loc, plt } from '../i18n.js';
 import { getProfile } from '../state.js';
-import { masteryOf, causeChain, readinessOf } from '../engine/recommender.js';
+import { masteryOf, causeChain, readinessOf, recommend } from '../engine/recommender.js';
 import { masteryBand } from '../engine/mastery.js';
 import { TOPICS, TOPIC_BY_ID } from '../data/curriculum.js';
 
@@ -100,9 +100,18 @@ export function renderGraph() {
       const dim = highlight && !hl;
       const mx = (a.x + b.x) / 2;
       return `<path class="gedge ${hl ? 'hl' : ''} ${dim ? 'gdim' : ''}" data-from="${pr}" data-to="${t.id}"
+                    marker-end="url(#gArrow)"
                     d="M${a.x + 20} ${a.y} C ${mx} ${a.y}, ${mx} ${b.y}, ${b.x - 20} ${b.y}"/>`;
     })
   ).join('');
+
+  /* Тема, которую движок советует взять следующей. Одна на всю карту — на
+     неё указывает пульсирующее кольцо, и это единственный ответ, за которым
+     ученик на самом деле сюда приходит: «с чего начать». */
+  const nextUp = recommend(p, 1)[0]?.topicId;
+
+  const RING = 16;                       // радиус кольца — один для всех
+  const CIRC = 2 * Math.PI * RING;       // длина окружности для дуги освоенности
 
   const nodes = topics.map((tp) => {
     const pL = masteryOf(p, tp.id);
@@ -111,18 +120,25 @@ export function renderGraph() {
     const isSel = selected === tp.id;
     const dim = highlight && !highlight.has(tp.id);
     const ready = readinessOf(p, tp.id);
-    const r = 11 + pL * 8;
     const label = loc(tp);
     const lines = wrapLabel(label);
+    /* Ядро растёт с освоенностью, но немного: основную величину теперь несёт
+       дуга кольца, а размер остаётся вторым, подсознательным сигналом. */
+    const core = 6.5 + pL * 3.5;
     return `
-      <g class="gnode ${isSel ? 'active' : ''} ${dim ? 'gdim' : ''}" data-act="graph-node" data-id="${tp.id}"
+      <g class="gnode ${isSel ? 'active' : ''} ${dim ? 'gdim' : ''} ${tp.id === nextUp ? 'gnext' : ''}"
+         data-act="graph-node" data-id="${tp.id}" style="--gd:${(Math.abs(c.x * 7 + c.y * 3) % 900)}ms"
          role="button" tabindex="0" aria-label="${label}">
-        <circle class="hit" cx="${c.x}" cy="${c.y}" r="22" fill="transparent"/>
-        <circle cx="${c.x}" cy="${c.y}" r="${r + 7}" fill="${BAND_COLOR[band]}" opacity="${isSel ? 0.28 : 0.1}"/>
-        <circle cx="${c.x}" cy="${c.y}" r="${r}" fill="${BAND_COLOR[band]}"
-                stroke="${isSel ? 'var(--text)' : 'transparent'}" stroke-width="2"/>
-        ${ready < 0.5 ? `<g class="glock">${iconGlyph('lock', c.x, c.y, 13)}</g>` : ''}
-        <text x="${c.x}" y="${c.y + r + 14}" text-anchor="middle">${
+        <circle class="hit" cx="${c.x}" cy="${c.y}" r="24" fill="transparent"/>
+        <circle class="ghalo" cx="${c.x}" cy="${c.y}" r="${RING + 5}" fill="${BAND_COLOR[band]}"/>
+        ${tp.id === nextUp ? `<circle class="gpulse" cx="${c.x}" cy="${c.y}" r="${RING}" fill="none" stroke="${BAND_COLOR[band]}"/>` : ''}
+        <circle class="gtrack" cx="${c.x}" cy="${c.y}" r="${RING}" fill="none"/>
+        <circle class="gring" cx="${c.x}" cy="${c.y}" r="${RING}" fill="none" stroke="${BAND_COLOR[band]}"
+                stroke-dasharray="${CIRC.toFixed(1)}" stroke-dashoffset="${(CIRC * (1 - pL)).toFixed(1)}"
+                transform="rotate(-90 ${c.x} ${c.y})"/>
+        <circle class="gcore" cx="${c.x}" cy="${c.y}" r="${core.toFixed(1)}" fill="${BAND_COLOR[band]}"/>
+        ${ready < 0.5 ? `<g class="glock">${iconGlyph('lock', c.x, c.y, 12)}</g>` : ''}
+        <text x="${c.x}" y="${c.y + RING + 16}" text-anchor="middle">${
           lines.map((ln, i) => `<tspan x="${c.x}" dy="${i ? 11 : 0}">${ln}</tspan>`).join('')
         }</text>
       </g>`;
@@ -157,6 +173,15 @@ export function renderGraph() {
     <div class="graph-shell">
       <svg viewBox="0 0 ${String(Math.round(width))} ${String(Math.round(height))}"
            preserveAspectRatio="xMidYMid meet" role="img" aria-label="${t('graph.aria')}">
+        <defs>
+          <!-- Направление связи — половина смысла графа: «эта тема держится
+               на той». Без наконечника линия читается как «они как-то
+               связаны», что неверно. -->
+          <marker id="gArrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="4.6" markerHeight="4.6"
+                  orient="auto-start-reverse" markerUnits="strokeWidth">
+            <path d="M0 0.6 L7.5 4 L0 7.4 z" fill="var(--rule-strong)"/>
+          </marker>
+        </defs>
         ${raw(edges)}
         ${raw(nodes)}
       </svg>
@@ -285,7 +310,57 @@ function nodePanel(p, tp) {
   </div>`;
 }
 
+/**
+ * Подсветка соседей под курсором.
+ *
+ * Карта из одиннадцати тем и четырнадцати связей глазом за раз не читается:
+ * все линии одинаковые, и понять, на чём держится конкретная тема, можно
+ * только водя пальцем. Наведение отвечает на этот вопрос мгновенно — тема,
+ * её связи и их вторые концы остаются в цвете, остальное уходит в фон.
+ *
+ * Слушатели делегированы на документ: карта перерисовывается на каждый
+ * выбор узла, и подписки на сами узлы после первой же перерисовки указывали
+ * бы в пустоту.
+ */
+let hoverBound = false;
+
+function clearHover(svg) {
+  svg.querySelectorAll('.gnear, .gfar').forEach((el) => el.classList.remove('gnear', 'gfar'));
+}
+
+function bindGraphHover() {
+  if (hoverBound) return;
+  hoverBound = true;
+
+  const enter = (e) => {
+    const svg = e.target.closest?.('.graph-shell svg');
+    if (!svg) return;
+    clearHover(svg);
+    const node = e.target.closest('.gnode');
+    if (!node) return;
+
+    const id = node.dataset.id;
+    const near = new Set([id]);
+    svg.querySelectorAll('.gedge').forEach((edge) => {
+      const { from, to } = edge.dataset;
+      if (from === id || to === id) { edge.classList.add('gnear'); near.add(from); near.add(to); }
+      else edge.classList.add('gfar');
+    });
+    svg.querySelectorAll('.gnode').forEach((n) => n.classList.add(near.has(n.dataset.id) ? 'gnear' : 'gfar'));
+  };
+
+  document.addEventListener('pointerover', enter);
+  document.addEventListener('focusin', enter);
+  document.addEventListener('pointerout', (e) => {
+    const svg = e.target.closest?.('.graph-shell svg');
+    // Уходим только когда курсор покинул карту целиком, а не перешёл на соседа.
+    if (svg && !svg.contains(e.relatedTarget)) clearHover(svg);
+  });
+}
+
 export function registerGraphActions(rerender) {
+  bindGraphHover();
+
   action('graph-node', ({ id }) => {
     selected = selected === id ? null : id;
     rerender();

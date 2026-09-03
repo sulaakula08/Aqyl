@@ -598,3 +598,45 @@ screen corner. An empty corner beats a covered field.
 
 Verified: across all seven form controls he covers **zero** of them; typing, clicking and the
 select all behave.
+
+---
+
+## The knowledge graph, made to carry its own weight — 2026-09-03
+
+It was drawn as a diagram: equal thin lines, flat circles, colour the only variable. It is the
+centrepiece of the product and it looked like a stock chart. Six changes, each of which also
+makes it more useful:
+
+- **Every node is now a gauge.** A track ring plus a mastery arc, one radius for all topics so
+  the readings are comparable — size alone was an encoding you cannot read precisely. The core
+  still grows with mastery as a second, subconscious signal.
+- **One node pulses**: the topic the engine recommends next. Exactly one on the whole map. It is
+  the answer to the question students actually come to this screen with — where do I start.
+- **Edges have direction.** An arrowhead per edge: without it a line says "these are related",
+  which is not what a prerequisite graph means.
+- **Hover lights the neighbourhood** — the topic, its edges and their far ends stay in colour,
+  the rest of the map drops to 14%. Eleven topics and fourteen edges cannot be read at a glance
+  otherwise; this answers "what does this rest on, and what does it unlock" in one gesture.
+  Delegated listeners, because the map re-renders on every selection.
+- **Flow along the selected cause chain** — a short dash running from prerequisite to dependent.
+- **Its own surface**: a fine work-surface grid and a vignette. The page around it is ruled
+  coarsely, the map finely; the difference in pitch is what separates the instrument from the
+  paper it lies on.
+
+### The phantom transform, and how it was finally killed
+
+Third time this bug appeared: the mascot sat 90px outside its slot and widened the page. This
+time it was pinned down properly — and it is **not** what it looked like. There was no inline
+style, no CSS rule matching the element, and cancelling *every* animation in the document did not
+move it; yet `transform: none !important` snapped it back into place instantly. That places the
+source above normal author declarations but below important ones — a compositing artefact left on
+the layer after the element was animated and re-parented, not something addressable through the
+CSSOM.
+
+So `anim.reset()` now pins `transform: none !important` on a seated mascot (which never needs a
+transform of its own), and `toLayer()` removes that declaration when he takes off. Plus a
+structural guard for the whole product: `html, body { overflow-x: clip }` — `clip` rather than
+`hidden`, because `hidden` creates a scroll container and would break the sticky header.
+
+Verified: fly the cause chain, then walk six routes — zero overflow everywhere, mascot seated
+exactly on its slot once the arrival animation ends, flight still departs and lands.
