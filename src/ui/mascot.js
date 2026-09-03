@@ -194,13 +194,52 @@ export const mascot = {
 
     if (el?.getBoundingClientRect) {
       const r = el.getBoundingClientRect();
-      const left = r.left - w - gap;
-      const right = r.right + gap;
-      // Слева от цели, если там есть место; иначе справа. Персонаж не
-      // должен закрывать собой то, на что показывает.
-      const useLeft = side === 'left' || (side === 'auto' && left > 8);
-      x = useLeft ? left : Math.min(right, window.innerWidth - w - 8);
-      y = Math.max(8, Math.min(r.top + r.height / 2 - h / 2, window.innerHeight - h - 8));
+      const left = r.left - w - gap;          // место слева от цели
+      const right = r.right + gap;            // место справа от цели
+      const fitsLeft = left >= 8;
+      const fitsRight = right + w <= window.innerWidth - 8;
+
+      /* Персонаж не имеет права закрывать собой то, на что показывает.
+         Раньше здесь было «слева, если влезает, иначе справа» — и это
+         «иначе» с прижатием к краю экрана сажало птицу ПРЯМО НА поле ввода:
+         у широкого поля правого места нет, прижатая к краю координата
+         попадала внутрь него. Кликам это не мешало (слой не ловит события),
+         но поле было закрыто, и ученик просто не видел, что он печатает.
+
+         Поэтому третий вариант: не влезло ни слева, ни справа — уходим НАД
+         целью, а если и сверху нет места, то под ней. Так на любом экране
+         персонаж остаётся рядом и ничего не перекрывает. */
+      if (side === 'left' ? true : fitsLeft) {
+        x = Math.max(8, left);
+        y = r.top + r.height / 2 - h / 2;
+      } else if (fitsRight) {
+        x = right;
+        y = r.top + r.height / 2 - h / 2;
+      } else {
+        x = Math.max(8, Math.min(r.left + r.width / 2 - w / 2, window.innerWidth - w - 8));
+        const above = r.top - h - gap;
+        y = above >= 8 ? above : r.bottom + gap;
+      }
+
+      x = Math.max(8, Math.min(x, window.innerWidth - w - 8));
+      y = Math.max(8, Math.min(y, window.innerHeight - h - 8));
+
+      /* Прижатие к краям экрана могло снова надвинуть персонажа на поле —
+         на низком окне «снизу» упирается в край и возвращается наверх. Здесь
+         это проверяется прямо: если прямоугольники всё-таки пересеклись,
+         перебираем углы, пока не найдётся свободный. Не нашлось ни одного —
+         персонаж уходит в угол экрана. Пустой угол лучше закрытого поля. */
+      const hits = (px, py) => !(px + w < r.left || px > r.right || py + h < r.top || py > r.bottom);
+      if (hits(x, y)) {
+        const maxX = window.innerWidth - w - 8;
+        const maxY = window.innerHeight - h - 8;
+        const spot = [
+          [x, r.top - h - gap], [x, r.bottom + gap],
+          [r.left - w - gap, y], [r.right + gap, y],
+          [8, 8], [maxX, 8],
+        ].find(([px, py]) => px >= 8 && px <= maxX && py >= 8 && py <= maxY && !hits(px, py));
+        if (spot) { [x, y] = spot; } else { x = 8; y = 8; }
+      }
     }
 
     const from = i.el._pos || { x, y: y + 40 };

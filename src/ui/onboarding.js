@@ -22,6 +22,13 @@ export function renderOnboarding() {
         <h1 style="font-size:2rem;margin-top:14px">${t('onb.title')}</h1>
         <p style="margin-top:8px">${t('onb.lead')}</p>
       </div>
+      <!-- Персонаж сидит рядом с заголовком и никуда не летает.
+           Сначала он перелетал от поля к полю — и на ноутбуке садился прямо
+           на соседний ввод: события он не перехватывал, но поле закрывал,
+           и ученик не видел, что печатает. Анкета — плотная сетка полей, на
+           ней место персонажа фиксировано; вести за собой он будет там, где
+           для этого есть простор (экскурсия, карта знаний). -->
+      <div class="mascot-slot" data-mascot="onboarding" data-size="md"></div>
     </div>
 
     <form class="panel" data-act="onb-submit" id="onbForm">
@@ -81,33 +88,24 @@ export function renderOnboarding() {
         ${t('cta.diagnostic')} →
       </button>
 
-      <!-- Это не гнездо, а метка: на анкете персонаж не стоит на месте, а
-           перелетает от поля к полю поверх страницы. Разметка только сообщает
-           режим и точку, с которой он начинает. -->
-      <div data-mascot="onboarding" data-float="1" data-size="md" data-anchor="#f-name" hidden></div>
     </form>
   </div>`;
 }
 
 /**
- * Персонаж ведёт по анкете.
+ * Реакции анкеты.
  *
- * Слушатель один и висит на документе, а не на полях: анкета перерисовывается
- * на каждый выбор предмета, и подписки на конкретные элементы после первой же
- * перерисовки указывали бы в пустоту.
+ * Персонаж на анкете НЕ перелетает от поля к полю — он сидит в гнезде у
+ * заголовка. Летающий над плотной сеткой полей персонаж рано или поздно
+ * оказывается поверх соседнего ввода: клики он не перехватывает (слой не
+ * ловит события), но поле закрывает собой, и ученик перестаёт видеть, что
+ * набирает. Никакая геометрия расстановки этого не лечит — лечит решение
+ * не летать там, где у человека работа с полями.
  *
- * Перелёт — только к тому полю, в котором ученик сейчас находится. Персонаж,
- * который сам решает, куда вести, превращает анкету в мультфильм, где от
- * зрителя ничего не зависит; здесь он идёт следом за вниманием, а не перед ним.
+ * Остаётся то, что помогает и ничего не загораживает: кивок на каждый
+ * сделанный выбор и приветствие по имени.
  */
 let greeted = false;
-
-function followFocus(e) {
-  const form = e.target.closest?.('#onbForm');
-  if (!form) return;
-  const field = e.target.closest('.field, .choice-row');
-  if (field) mascot.flyTo(field);
-}
 
 function greetOnce(nameInput) {
   const name = nameInput.value.trim();
@@ -118,7 +116,6 @@ function greetOnce(nameInput) {
 }
 
 export function registerOnboardingActions(navigate) {
-  document.addEventListener('focusin', followFocus);
   document.addEventListener('change', (e) => {
     if (e.target.id === 'f-name') greetOnce(e.target);
   });
@@ -131,7 +128,6 @@ export function registerOnboardingActions(navigate) {
       else if (i < 0) list.push(id);
     });
     el.classList.toggle('on', getProfile().subjects.includes(id));
-    mascot.flyTo(el);
     mascot.fire('nod');
     cue('hint');
   });
@@ -139,7 +135,6 @@ export function registerOnboardingActions(navigate) {
   action('pick-goal', ({ id }, el) => {
     update((s) => { s.profile.goal = id; });
     el.parentElement.querySelectorAll('.choice').forEach((c) => c.classList.toggle('on', c === el));
-    mascot.flyTo(el);
     mascot.fire('nod');
     cue('hint');
   });

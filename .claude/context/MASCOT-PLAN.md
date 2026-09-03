@@ -568,3 +568,33 @@ browser without it would show an empty page. Here, no support means the graph si
 
 Verified: 27 of 34 elements revealed above the fold on load, all 34 after scrolling, **zero stuck**
 on any of 11 routes, no horizontal overflow, no console errors.
+
+---
+
+## Fix: the mascot must not sit on the form — 2026-09-03
+
+Reported from a laptop: the onboarding form could not be edited. The cause was the mascot
+following focus around it. He flew to whichever field had focus, and when there was no room to
+the left he was placed to the right and clamped to the viewport edge — which, for a field that
+reaches near that edge, puts him **on top of the control**. The layer takes no pointer events, so
+clicks still went through; but the field was covered, and a student could not see what they were
+typing. A select's dropdown arrow disappeared entirely under him.
+
+First attempt was geometric: prefer left, then right, then above, then below, plus an explicit
+overlap test against the target. Measured across the form, he still landed on *neighbouring*
+controls — focusing the name field covered the class select. On a laptop-height viewport a dense
+grid of fields simply has nowhere safe to put a 108-pixel bird.
+
+So the decision was reverted rather than patched: **on the onboarding form the mascot no longer
+flies at all.** He has a fixed seat beside the heading and reacts from there — a nod on every
+choice, the greeting by name. Following focus around a form is intrusive by nature, and no
+placement algorithm makes it not so. Flight is kept where there is room for it and nothing to
+cover: the tour (where the popover is the only content and he is meant to lead) and the knowledge
+graph (a diagram, no inputs).
+
+The improved placement logic stays in `mascot.flyTo` — it still serves the tour and the graph
+flight, and it now refuses to overlap its target, falling back above, below, and finally to a
+screen corner. An empty corner beats a covered field.
+
+Verified: across all seven form controls he covers **zero** of them; typing, clicking and the
+select all behave.
