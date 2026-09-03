@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="styles/tokens.css">
   <link rel="stylesheet" href="styles/app.css">
   <link rel="stylesheet" href="styles/motion.css">
+  <link rel="stylesheet" href="styles/mascot.css">
 </head>
 <body>
   <a class="skip-link" href="#main" data-i18n="app.skip">Перейти к содержимому</a>
@@ -46,6 +47,11 @@
     </div>
   </header>
 
+  <!-- Боковая панель режима приложения. Наполняется из main.js: на витрине
+       её нет вовсе, поэтому пустой каркас в разметке не мешает. -->
+  <aside class="sidebar" id="sidebar" hidden></aside>
+  <div class="sidebar-scrim" id="sidebarScrim" hidden></div>
+
   <main id="main"></main>
 
   <footer class="footer">
@@ -80,6 +86,7 @@
             <li><a href="#/method" data-i18n="app.methodNav">Как работает ИИ</a></li>
             <li><a href="pitch/index.html" data-i18n="app.footPitch">Питч-дек</a></li>
             <li><a href="README.md" data-i18n="app.footReadme">Техническое описание</a></li>
+            <li><a href="#/dashboard" data-act="tour" data-i18n="tour.replay">Показать экскурсию</a></li>
             <li><a href="#/" data-act="reset" data-i18n="common.reset">Сбросить прогресс</a></li>
           </ul>
         </div>

@@ -1,5 +1,8 @@
 import { html, raw, action, toast, speak } from './dom.js';
 import { icon } from './icons.js';
+import { mascot } from './mascot.js';
+import { burst, flyTo, squash, haptic, hitstop, scribble } from './juice.js';
+import { cue } from './sound.js';
 import { t, tf, loc, speechLocale } from '../i18n.js';
 import { getProfile, getSettings, recordAttempt } from '../state.js';
 import { pickItem, masteryOf, successChance, causeChain } from '../engine/recommender.js';
@@ -110,6 +113,11 @@ export function renderLearn(topicId) {
                  ${icon('hint', 16)} ${t('cta.hint')} ${s.hintLevel > 0 ? `(${s.hintLevel}/${s.item.hints.length})` : ''}
                </button>`)}
           <a class="btn btn-ghost" href="#/tutor?q=${encodeURIComponent(loc(topic))}">${t('graph.askTutor')}</a>
+          <!-- Гнездо талисмана стоит именно здесь, у кнопок: частицы верного
+               ответа вылетают из нажатого варианта и попадают персонажу,
+               а он реагирует там, куда ученик и так смотрит. -->
+          <div class="mascot-slot mascot-slot-inline" data-mascot="learn" data-size="md"
+               style="margin-left:auto;align-self:flex-end"></div>
         </div>
       </div>
 
@@ -154,9 +162,14 @@ function renderSummary(topic, s, pL, band) {
   return html`
   <div class="page wrap">
     <div class="quiz">
-      <span class="label label-accent">${t('learn.blockDone')}</span>
-      <h1 style="font-size:1.9rem;margin:14px 0 8px">${loc(topic)}</h1>
-      <p>${tf('learn.ofCorrect', { a: s.correct, b: s.solved, h: s.totalHints || 0 })}</p>
+      <div style="display:flex;gap:18px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap">
+        <div>
+          <span class="label label-accent">${t('learn.blockDone')}</span>
+          <h1 style="font-size:1.9rem;margin:14px 0 8px">${loc(topic)}</h1>
+          <p>${tf('learn.ofCorrect', { a: s.correct, b: s.solved, h: s.totalHints || 0 })}</p>
+        </div>
+        <div class="mascot-slot" data-mascot="learn-done" data-size="lg"></div>
+      </div>
 
       <div class="panel" style="margin-top:22px">
         <div style="display:flex;justify-content:space-between;font-size:.9rem;margin-bottom:8px">
@@ -197,6 +210,86 @@ function renderSummary(topic, s, pL, band) {
   </div>`;
 }
 
+/**
+ * Ученик попал в типичную ошибку, а не ткнул наугад.
+ *
+ * Позицию «ошибочного» варианта проставляет curriculum.js при перестановке
+ * ответов (`missIndex`) — это тот самый вариант, который разбирает поле
+ * `misconception`. Такой ответ заслуживает другой реакции, чем случайное
+ * нажатие: ученик рассуждал, просто ошибся, — и персонаж, который это
+ * различает, читается как понимающий, а не как автомат с двумя лампочками.
+ */
+function isTypicalMistake(item, chosen) {
+  return item.missIndex >= 0 && chosen === item.missIndex;
+}
+
+/** Сколько верных ответов подряд прямо сейчас — от этого зависит размах радости. */
+function trailingStreak(s) {
+  let n = 0;
+  const res = s.results || [];
+  for (let i = res.length - 1; i >= 0 && res[i]; i--) n += 1;
+  return n;
+}
+
+/**
+ * Отдача на проверенный ответ.
+ *
+ * Вызывается ПОСЛЕ перерисовки — это принципиально. Разбор и правильный
+ * вариант к этому моменту уже на экране; анимация играет поверх готовой
+ * информации, а не вместо неё. Ученик, который читает быстрее, чем прыгает
+ * персонаж, ничего не теряет.
+ */
+function reactToAnswer({ correct, near, gained }, s) {
+  const target = document.querySelector(correct ? '.option.ok' : '.option.bad');
+  const r = target?.getBoundingClientRect();
+  const origin = r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+
+  hitstop(45);
+
+  if (correct) {
+    squash(target);
+    /* Верный вариант обводится от руки — так, как это делает учитель
+       карандашом. Цвет тот же, что у полосы освоенной темы: обводка не
+       вводит нового цвета, она пользуется уже существующим языком. */
+    scribble(target);
+    burst(origin || target, { count: 12, spread: 130 });
+    // Опыт летит туда, где он хранится: связь между кнопкой и счётчиком
+    // иначе не возникает — это два разных угла экрана.
+    flyTo(origin || target,
+      document.querySelector('.level-chip') || document.querySelector('.side-status'),
+      gained ? `+${gained} XP` : '');
+    haptic(8);
+    cue('correct');
+    mascot.fire('correct', { streak: trailingStreak(s) });
+  } else {
+    /* Неверный вариант зачёркивается, а верный — обводится: ученик видит
+       не «ошибку», а разбор, сделанный чужой рукой поверх его работы. */
+    scribble(target, { kind: 'strike' });
+    scribble(document.querySelector('.option.ok'));
+    // Ни встряски, ни частиц: и то и другое читалось бы как наказание.
+    haptic([12, 40, 12]);
+    cue('wrong');
+    mascot.fire(near ? 'nearMiss' : 'oops');
+  }
+}
+
+/**
+ * Итог блока.
+ *
+ * Полный праздник — только за безошибочный блок. Открытая тема получает свой,
+ * более скромный жест; блок, пройденный с ошибками, — сдержанную гордость.
+ * Если хлопать одинаково всегда, к третьей теме овация перестанет что-либо
+ * значить: награду надо копить, а не тратить.
+ */
+function finishReaction(s) {
+  const perfect = s.solved > 0 && s.correct === s.solved;
+  const unlocked = document.querySelector('.panel-accent');
+
+  if (perfect) { cue('celebrate'); mascot.fire('celebrate'); }
+  else if (unlocked) { cue('unlock'); mascot.fire('unlock'); }
+  else mascot.fire('proud');
+}
+
 export function registerLearnActions(rerender) {
   action('learn-pick', ({ i }) => {
     if (ses.revealed) return;
@@ -209,6 +302,12 @@ export function registerLearnActions(rerender) {
       ses.hintLevel += 1;
       ses.totalHints = (ses.totalHints || 0) + 1;
       rerender();
+      cue('hint');
+      mascot.fire('hint');
+      // Подсказка подчёркивается той же рукой — персонаж показывает крылом,
+      // карандаш ведёт линию. Один жест на двоих.
+      const boxes = document.querySelectorAll('.hint-box');
+      scribble(boxes[boxes.length - 1], { kind: 'underline', pad: 2, hold: 3400 });
     }
   });
 
@@ -216,6 +315,7 @@ export function registerLearnActions(rerender) {
     if (ses.selected === null || ses.revealed) return;
     const before = masteryOf(getProfile(), ses.topicId);
     const correct = ses.selected === ses.item.answer;
+    const near = !correct && isTypicalMistake(ses.item, ses.selected);
     const { gained } = recordAttempt({
       item: ses.item, chosen: ses.selected, correct,
       hintsUsed: ses.hintLevel, ms: Date.now() - ses.startedAt,
@@ -227,13 +327,19 @@ export function registerLearnActions(rerender) {
     ses.correct += correct ? 1 : 0;
     (ses.results = ses.results || []).push(correct);
     rerender();
+    reactToAnswer({ correct, near, gained }, ses);
   });
 
   action('learn-next', () => {
-    if (ses.solved >= BLOCK) { ses.finished = true; rerender(); return; }
+    if (ses.solved >= BLOCK) {
+      ses.finished = true;
+      rerender();
+      finishReaction(ses);
+      return;
+    }
     ses.seen.push(ses.item.id);
     const next = pickItem(getProfile(), ses.topicId, ses.seen);
-    if (!next) { ses.finished = true; rerender(); return; }
+    if (!next) { ses.finished = true; rerender(); finishReaction(ses); return; }
     ses.item = next;
     ses.selected = null;
     ses.revealed = false;

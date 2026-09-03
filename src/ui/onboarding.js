@@ -1,6 +1,8 @@
 import { html, raw, action, toast } from './dom.js';
 import { icon } from './icons.js';
-import { t, loc } from '../i18n.js';
+import { mascot } from './mascot.js';
+import { cue } from './sound.js';
+import { t, tf, loc } from '../i18n.js';
 import { getProfile, update } from '../state.js';
 import { SUBJECTS, GOALS } from '../data/curriculum.js';
 
@@ -78,11 +80,49 @@ export function renderOnboarding() {
       <button class="btn btn-primary btn-block" type="submit" style="margin-top:10px">
         ${t('cta.diagnostic')} →
       </button>
+
+      <!-- Это не гнездо, а метка: на анкете персонаж не стоит на месте, а
+           перелетает от поля к полю поверх страницы. Разметка только сообщает
+           режим и точку, с которой он начинает. -->
+      <div data-mascot="onboarding" data-float="1" data-size="md" data-anchor="#f-name" hidden></div>
     </form>
   </div>`;
 }
 
+/**
+ * Персонаж ведёт по анкете.
+ *
+ * Слушатель один и висит на документе, а не на полях: анкета перерисовывается
+ * на каждый выбор предмета, и подписки на конкретные элементы после первой же
+ * перерисовки указывали бы в пустоту.
+ *
+ * Перелёт — только к тому полю, в котором ученик сейчас находится. Персонаж,
+ * который сам решает, куда вести, превращает анкету в мультфильм, где от
+ * зрителя ничего не зависит; здесь он идёт следом за вниманием, а не перед ним.
+ */
+let greeted = false;
+
+function followFocus(e) {
+  const form = e.target.closest?.('#onbForm');
+  if (!form) return;
+  const field = e.target.closest('.field, .choice-row');
+  if (field) mascot.flyTo(field);
+}
+
+function greetOnce(nameInput) {
+  const name = nameInput.value.trim();
+  if (!name || greeted) return;
+  greeted = true;
+  mascot.say(tf('mascot.greetName', { name }));
+  mascot.fire('nod');
+}
+
 export function registerOnboardingActions(navigate) {
+  document.addEventListener('focusin', followFocus);
+  document.addEventListener('change', (e) => {
+    if (e.target.id === 'f-name') greetOnce(e.target);
+  });
+
   action('toggle-subject', ({ id }, el) => {
     update((s) => {
       const list = s.profile.subjects;
@@ -91,11 +131,17 @@ export function registerOnboardingActions(navigate) {
       else if (i < 0) list.push(id);
     });
     el.classList.toggle('on', getProfile().subjects.includes(id));
+    mascot.flyTo(el);
+    mascot.fire('nod');
+    cue('hint');
   });
 
   action('pick-goal', ({ id }, el) => {
     update((s) => { s.profile.goal = id; });
     el.parentElement.querySelectorAll('.choice').forEach((c) => c.classList.toggle('on', c === el));
+    mascot.flyTo(el);
+    mascot.fire('nod');
+    cue('hint');
   });
 
   action('onb-submit', (_d, form) => {
@@ -111,6 +157,11 @@ export function registerOnboardingActions(navigate) {
       s.ui.onboarded = true;
     });
     toast(t('app.profileSaved'));
-    navigate('/diagnostic');
+    /* Персонаж уходит первым, экран меняется следом: так переход читается
+       как «он повёл меня дальше», а не как перезагрузка страницы. */
+    mascot.say(t('mascot.ready'));
+    mascot.fire('exit');
+    greeted = false;
+    setTimeout(() => navigate('/diagnostic'), mascot.calm() ? 0 : 420);
   });
 }

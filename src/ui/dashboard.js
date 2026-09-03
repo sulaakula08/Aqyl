@@ -1,5 +1,6 @@
 import { html, raw, ring, excerpt } from './dom.js';
 import { icon } from './icons.js';
+import { mascot } from './mascot.js';
 import { t, tf, loc, plt } from '../i18n.js';
 import { getProfile, ALL_BADGES } from '../state.js';
 import { recommend, weakSpots, masteryOf, successChance } from '../engine/recommender.js';
@@ -12,11 +13,64 @@ const WHY_LABEL = {
   leverage: 'why.leverage', review: 'why.review',
 };
 
+/**
+ * Встреча в кабинете — один раз за визит.
+ *
+ * Порядок важен и он же продуктовое решение. Прерванная серия показывается
+ * первой, но ровно одним тихим тактом — и сразу сменяется предложением
+ * маленького шага. Ученики у нас школьники, которым и без платформы хватает
+ * сообщений о том, что они отстают; на чувстве вины мы не играем, хотя
+ * механика для этого готова.
+ *
+ * Флаг живёт в памяти модуля: переходы между разделами встречу не повторяют,
+ * а перезагрузка страницы считается новым визитом.
+ */
+let greeted = false;
+
+const dayOf = (str) => {
+  const d = str ? new Date(str) : null;
+  return d && !Number.isNaN(d.getTime()) ? Math.floor(d.getTime() / 86_400_000) : null;
+};
+
+export function resetGreeting() { greeted = false; }
+
+export function greetOnDashboard() {
+  if (greeted || !mascot.enabled()) return;
+  greeted = true;
+
+  const p = getProfile();
+  const last = dayOf(p.lastActive);
+  const today = Math.floor(Date.now() / 86_400_000);
+  const away = last === null ? null : today - last;
+
+  // Серия оборвалась: занимался, но пропустил больше одного дня.
+  if (away !== null && away > 1 && p.streakDays > 1) {
+    mascot.fire('sad');
+    mascot.say(t('mascot.streakLost'));
+    return;
+  }
+
+  if (away !== null && away === 1) {
+    mascot.fire('proud');
+    mascot.say(tf('mascot.backHi', { n: p.streakDays }));
+    return;
+  }
+
+  // Обычный заход: персонаж показывает, что видит слабое место, а не хвалит
+  // просто так. Тревога здесь — про пробел, никогда не про ученика.
+  const weak = weakSpots(p, 1)[0];
+  if (weak && weak.pL < 0.4) {
+    mascot.fire('worried');
+    mascot.say(t('mascot.gapHere'));
+  }
+}
+
 export function renderDashboard() {
   const p = getProfile();
   if (!p.diagnosticDone && p.attempts === 0) {
     return html`
       <div class="page wrap center" style="max-width:560px">
+        <div class="mascot-slot" data-mascot="gate" data-size="lg" style="margin-bottom:8px"></div>
         <h1 style="font-size:1.9rem">${t('dash.gate')}</h1>
         <p style="margin:12px 0 22px">${t('dash.gateSub')}</p>
         <a class="btn btn-primary" href="#/onboarding">${t('cta.diagnostic')} →</a>
@@ -39,9 +93,10 @@ export function renderDashboard() {
         <h1 style="font-size:2rem;margin-top:14px">${p.name ? t('dash.hi') + ', ' + p.name : t('dash.hi')}</h1>
         <p style="margin-top:6px">${String(p.grade)} ${t('common.grade')} · ${String(p.attempts)} ${t('dash.solved')} · ${tf('dash.topicsOf', { a: mastered, b: topics.length })}</p>
       </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
         <a class="btn btn-ghost btn-sm" href="#/plan">${t('plan.title')}</a>
         <a class="btn btn-ghost btn-sm" href="#/tutor">${t('tutor.title')}</a>
+        <div class="mascot-slot mascot-slot-inline" data-mascot="dashboard" data-size="md"></div>
       </div>
     </div>
 

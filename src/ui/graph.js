@@ -1,5 +1,6 @@
 import { html, raw, action } from './dom.js';
 import { icon, iconGlyph } from './icons.js';
+import { mascot } from './mascot.js';
 import { t, tf, loc, plt } from '../i18n.js';
 import { getProfile } from '../state.js';
 import { masteryOf, causeChain, readinessOf } from '../engine/recommender.js';
@@ -98,7 +99,7 @@ export function renderGraph() {
       const hl = highlight && highlight.has(pr) && highlight.has(t.id);
       const dim = highlight && !hl;
       const mx = (a.x + b.x) / 2;
-      return `<path class="gedge ${hl ? 'hl' : ''} ${dim ? 'gdim' : ''}"
+      return `<path class="gedge ${hl ? 'hl' : ''} ${dim ? 'gdim' : ''}" data-from="${pr}" data-to="${t.id}"
                     d="M${a.x + 20} ${a.y} C ${mx} ${a.y}, ${mx} ${b.y}, ${b.x - 20} ${b.y}"/>`;
     })
   ).join('');
@@ -143,6 +144,7 @@ export function renderGraph() {
         <h1 style="font-size:2rem;margin-top:14px">${t('graph.h1')}</h1>
         <p style="margin-top:6px;max-width:62ch">${t('graph.sub')} ${t('graph.sub2')}</p>
       </div>
+      <div class="mascot-slot" data-mascot="graph" data-size="md"></div>
     </div>
 
     <div class="grid g4" style="margin-bottom:18px">
@@ -287,5 +289,87 @@ export function registerGraphActions(rerender) {
   action('graph-node', ({ id }) => {
     selected = selected === id ? null : id;
     rerender();
+    if (!selected) return;
+
+    /* Реакция на выбранный узел — это и есть тезис продукта, показанный
+       телом: персонаж тревожится не за оценку, а за тему, на которой всё
+       сломалось. Освоенная тема получает спокойную гордость. */
+    const p = getProfile();
+    const pL = masteryOf(p, selected);
+    if (pL < 0.4) mascot.fire('worried');
+    else if (pL >= 0.85) mascot.fire('proud');
+    else mascot.fire('nod');
+
+    flyTheChain(p, selected);
   });
+}
+
+/**
+ * Персонаж пролетает цепочку причин прямо по карте.
+ *
+ * Это главное утверждение продукта, до сих пор существовавшее только текстом:
+ * «ты заваливаешь не эту тему, а ту, что под ней». Стрелочки в панели под
+ * графом объясняют это правильно и совершенно не убеждают — их не читают.
+ * Птица, которая срывается с выбранного узла и по одному спускается до
+ * самого нижнего, объясняет то же самое за две секунды и без единого слова.
+ *
+ * Порядок обратный тому, что отдаёт causeChain(): та возвращает цепочку от
+ * корня к симптому, а лететь нужно наоборот — от того, что ученик выбрал, к
+ * тому, что он не выбирал и о чём не подозревает. Направление здесь и есть
+ * содержание.
+ *
+ * Полёта нет, если цепочка из одного узла: лететь некуда, и «эффектная»
+ * анимация ради самой себя тут была бы враньём — она сообщала бы о находке,
+ * которой не было.
+ */
+function flyTheChain(profile, topicId) {
+  if (!mascot.enabled() || mascot.calm()) return;
+
+  const chain = causeChain(profile, topicId);
+  if (chain.length < 2) return;
+
+  const nodes = [...chain].reverse()
+    .map((id) => document.querySelector(`.gnode[data-id="${id}"]`))
+    .filter(Boolean);
+  if (nodes.length < 2) return;
+
+  /* Ток по ребру.
+     Персонаж не просто перелетает от узла к узлу — под ним по связи бежит
+     светящийся отрезок, ровно в те же полсекунды. Ребро графа перестаёт быть
+     линией на схеме и становится дорогой, по которой знание перетекает
+     снизу вверх. Смотреть на это можно бесконечно, а объясняет оно ту же
+     самую мысль: темы держатся друг на друге. */
+  const ids = [...chain].reverse();
+  ids.slice(0, -1).forEach((from, i) => {
+    setTimeout(() => sparkEdge(ids[i + 1], from), i * (520 + 380));
+  });
+
+  mascot.flyPath(nodes, {
+    size: 'sm',
+    step: 520,
+    hold: 380,
+    // На последнем узле — тревога: это и есть найденная причина.
+    onDone: () => mascot.fire('worried'),
+  });
+}
+
+/** Светящийся отрезок пробегает по ребру между двумя темами. */
+function sparkEdge(fromId, toId) {
+  const edge = document.querySelector(`.gedge[data-from="${fromId}"][data-to="${toId}"]`)
+    || document.querySelector(`.gedge[data-from="${toId}"][data-to="${fromId}"]`);
+  if (!edge) return;
+
+  const spark = edge.cloneNode();
+  spark.setAttribute('class', 'gedge gspark');
+  spark.removeAttribute('data-from');
+  spark.removeAttribute('data-to');
+  edge.parentNode.appendChild(spark);
+
+  const len = spark.getTotalLength();
+  const seg = Math.max(26, len * 0.22);
+  spark.style.strokeDasharray = `${seg} ${len}`;
+  spark.animate(
+    [{ strokeDashoffset: len }, { strokeDashoffset: -seg }],
+    { duration: 620, easing: 'cubic-bezier(.4,0,.5,1)' },
+  ).finished.catch(() => {}).then(() => spark.remove());
 }

@@ -1,0 +1,238 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Бүркіт — оформление талисмана и слоя отдачи.
+
+   Цвета тела берутся из акцента продукта: персонаж и есть степное золото,
+   другого цвета в палитре нет и не появится. А вот глаза, клюв и брови
+   заданы фиксированными значениями: персонаж всегда стоит на собственном
+   золотом теле, и правило «чернила по бумаге» в тёмной теме вывернуло бы
+   ему лицо наизнанку.
+
+   Здесь нет ни одной @keyframes: всё движение персонажа живёт в JS через
+   Web Animations API. Разделение намеренное — CSS-анимацию нельзя прервать
+   на полпути и продолжить с текущей позы, а персонажу это нужно постоянно.
+   ───────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --m-body: var(--accent-bright);
+  --m-wing: var(--accent);
+  --m-eye: #fffdf7;
+  --m-ink: #211b12;
+  --m-belly: rgba(255, 252, 240, 0.34);
+  --m-shadow: rgba(20, 20, 15, 0.15);
+}
+
+[data-theme='dark'] {
+  /* На тёмной бумаге чёрная тень не видна вовсе, поэтому здесь она светлая:
+     это не «тень» в физическом смысле, а пятно контакта с поверхностью. */
+  --m-shadow: rgba(0, 0, 0, 0.4);
+}
+
+/* ─── Персонаж ─────────────────────────────────────────────────────────── */
+
+.mascot {
+  position: relative;
+  flex: none;
+  line-height: 0;
+  /* Персонаж не должен ловить клики: под ним всегда что-то важное. */
+  pointer-events: none;
+  user-select: none;
+  /* Ни при каких обстоятельствах не толкать страницу вширь: горизонтальная
+     прокрутка ради талисмана — это ровно тот случай, когда украшение ломает
+     продукт. На узком экране он ужимается, а не выпихивает вёрстку. */
+  max-width: 100%;
+}
+
+.mascot-svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+/* Рост персонажа живёт в отдельных свойствах scale/translate, а не в
+   transform: transform принадлежит анимациям реакций и перезаписывается ими
+   целиком. Переход здесь нужен для линьки — новый силуэт не появляется
+   мгновенно, он вырастает за те полсекунды, пока летят перья. */
+.mascot g {
+  transition: scale 0.55s var(--ease-out), translate 0.55s var(--ease-out);
+}
+
+.mascot-sm { width: 74px; }
+.mascot-md { width: 108px; }
+.mascot-lg { width: 152px; }
+
+@media (max-width: 900px) {
+  .mascot-md { width: 88px; }
+  .mascot-lg { width: 112px; }
+}
+
+@media (max-width: 560px) {
+  .mascot-md { width: 74px; }
+  .mascot-lg { width: 92px; }
+}
+
+/* Веки в покое сжаты в ноль: моргание — это анимация scaleY, а не подмена
+   картинки. Без этой строки персонаж рождается с полуприкрытыми глазами.
+   Правило по классу, а не по id: оснастку можно отрисовать второй раз (в
+   питч-деке, в разборе для команды), и она обязана открывать глаза сама. */
+.mascot .m-lids { transform: scaleY(0); }
+
+/* Гнездо. Экран объявляет его разметкой и решает, где персонаж стоит. */
+.mascot-slot { display: flex; align-items: flex-end; justify-content: center; }
+.mascot-slot-inline { display: inline-flex; vertical-align: bottom; }
+
+/* ─── Реплика ──────────────────────────────────────────────────────────── */
+
+.mascot-bubble {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translate(-50%, 6px);
+  z-index: 2;
+  min-width: 128px;
+  max-width: 232px;
+  padding: 9px 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  color: var(--text);
+  font-size: 0.84rem;
+  line-height: 1.45;
+  text-align: left;
+  opacity: 0;
+  transition: opacity 0.22s var(--ease-out), transform 0.22s var(--ease-out);
+}
+
+.mascot-bubble.in { opacity: 1; transform: translate(-50%, 0); }
+
+/* Хвостик облачка — тот же приём, что у карточек экскурсии: повёрнутый
+   квадрат с двумя видимыми сторонами, без отдельной картинки. */
+.mascot-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  margin: -5px 0 0 -5px;
+  border: 1px solid var(--rule);
+  border-top: 0;
+  border-left: 0;
+  background: var(--surface);
+  transform: rotate(45deg);
+}
+
+/* Кнопка «прослушать» в ответе репетитора. Прижата к верхнему правому углу
+   реплики и приглушена: она нужна не всем и не должна спорить с текстом. */
+.msg.bot { position: relative; padding-right: 40px; }
+
+.msg-say {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  opacity: 0.45;
+  transition: opacity 0.15s var(--ease);
+}
+
+.msg-say:hover,
+.msg-say:focus-visible { opacity: 1; }
+
+/* Переключатели звука и талисмана в боковой панели: та же группа-«капсула»,
+   что у выбора языка, только с иконками вместо трёх букв. */
+.side-toggles { margin-top: 8px; }
+
+.side-toggles button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 14px;
+}
+
+/* ─── Полёт над страницей ──────────────────────────────────────────────── */
+
+.mascot-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 210;         /* над затемнением экскурсии (200): персонаж ведёт её */
+  pointer-events: none;
+  /* Летящий персонаж на краю экрана не должен рождать полосу прокрутки. */
+  overflow: hidden;
+}
+
+.mascot-floating {
+  position: absolute;
+  top: 0;
+  left: 0;
+  filter: drop-shadow(0 10px 18px rgba(20, 20, 15, 0.22));
+}
+
+/* ─── Слой отдачи: частицы и улетающий опыт ────────────────────────────── */
+
+.fx-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 205;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.fx-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  display: block;
+  will-change: transform, opacity;
+}
+
+.fx-fly {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+  will-change: transform, opacity;
+}
+
+/* Обводка верного варианта — «карандаш учителя». Поверх содержимого, но
+   ничего не перехватывает: это след, а не элемент управления. */
+.fx-scribble {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* Ток по ребру графа: тот же акцент, но ярче и толще обычной связи, и с
+   мягким свечением — единственное место во всём продукте, где свечение
+   уместно, потому что здесь оно означает движение, а не «красиво». */
+.gspark {
+  stroke: var(--accent-bright) !important;
+  stroke-width: 3.2 !important;
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 4px var(--accent-bright));
+  pointer-events: none;
+}
+
+/* Слово ответа репетитора: появляется в тот момент, когда персонаж его
+   «произносит». Скрытое слово занимает своё место заранее — иначе абзац
+   прыгал бы на каждом слове. */
+.fx-word { opacity: 0; transition: opacity 0.14s var(--ease); }
+.fx-word.on { opacity: 1; }
+
+/* Перо. Знак присутствия беркута — падает при входе в занятие и на линьке. */
+.fx-feather {
+  position: absolute;
+  display: block;
+  width: 11px;
+  height: 24px;
+  will-change: transform, opacity;
+}
+
+.fx-feather svg { display: block; width: 100%; height: 100%; }
+
+/* ─── Спокойный режим ──────────────────────────────────────────────────────
+   При prefers-reduced-motion персонаж остаётся на экране и продолжает менять
+   выражение — двигаться перестаёт только он сам. Убирать его целиком было бы
+   ошибкой: ученик, которому вредно движение, не обязан лишаться подсказок,
+   которые персонаж даёт позой. Частицы и облачко-перелёт при этом не
+   создаются вовсе — это делает JS, здесь только страховка. */
+@media (prefers-reduced-motion: reduce) {
+  .fx-layer { display: none; }
+  .mascot-bubble { transition: none; }
+}

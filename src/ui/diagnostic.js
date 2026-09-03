@@ -1,5 +1,8 @@
 import { html, raw, action } from './dom.js';
 import { icon } from './icons.js';
+import { mascot } from './mascot.js';
+import { burst, haptic, hitstop, scribble } from './juice.js';
+import { cue } from './sound.js';
 import { t, tf, loc, lang } from '../i18n.js';
 import { getProfile, update, recordAttempt } from '../state.js';
 import { pickDiagnosticItem, masteryOf, rootCause, hasEvidence } from '../engine/recommender.js';
@@ -88,6 +91,8 @@ export function renderDiagnostic() {
             ? `<button class="btn btn-primary" data-act="diag-next">${s.results.length >= LENGTH ? t('diag.result') : t('cta.next')} →</button>`
             : `<button class="btn btn-primary" data-act="diag-check" ${s.selected === null ? 'disabled' : ''}>${t('cta.check')}</button>`)}
           <button class="btn btn-ghost" data-act="diag-skip">${t('cta.skip')}</button>
+          <div class="mascot-slot mascot-slot-inline" data-mascot="diagnostic" data-size="md"
+               style="margin-left:auto;align-self:flex-end"></div>
         </div>
       </div>
 
@@ -125,9 +130,14 @@ function renderResult() {
   return html`
   <div class="page wrap">
     <div class="quiz">
-      <span class="label label-accent">${t('diag.done')}</span>
-      <h1 style="font-size:2rem;margin:14px 0 10px">${t('diag.result')}</h1>
-      <p>${tf('diag.doneP', { n: session?.results.length ?? LENGTH })}</p>
+      <div style="display:flex;gap:18px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap">
+        <div>
+          <span class="label label-accent">${t('diag.done')}</span>
+          <h1 style="font-size:2rem;margin:14px 0 10px">${t('diag.result')}</h1>
+          <p>${tf('diag.doneP', { n: session?.results.length ?? LENGTH })}</p>
+        </div>
+        <div class="mascot-slot" data-mascot="diagnostic-done" data-size="lg"></div>
+      </div>
 
       <div class="grid g3" style="margin:26px 0">
         <div class="panel center"><div class="metric" style="align-items:center"><b class="mono">θ ${p.theta >= 0 ? '+' : ''}${p.theta.toFixed(2)}</b><span>${t('dash.level')}</span></div></div>
@@ -169,6 +179,26 @@ function renderResult() {
   </div>`;
 }
 
+/**
+ * Задание считается трудным для этого ученика, а не «трудным вообще».
+ *
+ * Сложность задания `b` и способность ученика `theta` живут в одной шкале —
+ * этим и пользуемся: одна и та же задача для девятиклассника с θ = −0,8
+ * трудная, а для θ = +1,2 проходная. Персонаж реагирует на разницу, поэтому
+ * его поза сообщает ученику то, чего в тексте нет: «эта была тяжёлая».
+ */
+const isHardFor = (item, theta) => item.b - theta >= 0.5;
+
+/**
+ * Поза перед ответом: на трудном задании персонаж задумывается вместе с
+ * учеником. Это не украшение — телом сообщается то, что иначе пришлось бы
+ * писать словами и что ученик всё равно пролистал бы.
+ */
+function posture(item, theta) {
+  if (!item) return;
+  if (isHardFor(item, theta)) mascot.fire('think');
+}
+
 export function registerDiagnosticActions(rerender, navigate) {
   action('diag-pick', ({ i }) => {
     if (session.revealed) return;
@@ -182,11 +212,28 @@ export function registerDiagnosticActions(rerender, navigate) {
     const item = s.current;
     const correct = s.selected === item.answer;
     const before = getProfile().theta;
+    const hard = isHardFor(item, before);
     recordAttempt({ item, chosen: s.selected, correct, ms: Date.now() - s.startedAt });
     s.lastDelta = getProfile().theta - before;
     s.revealed = true;
     s.results.push({ itemId: item.id, correct });
     rerender();
+
+    hitstop(45);
+    if (correct) {
+      const el = document.querySelector('.option.ok');
+      scribble(el);
+      burst(el, { count: hard ? 14 : 9, spread: 130 });
+      haptic(8);
+      cue('correct');
+      // Взятое трудное задание — повод для гордости, а не для той же радости.
+      mascot.fire(hard ? 'proud' : 'correct');
+    } else {
+      haptic([12, 40, 12]);
+      cue('wrong');
+      // Диагностика обязана быть безопасной: здесь ошибаться — это её работа.
+      mascot.fire(item.missIndex === s.selected ? 'nearMiss' : 'oops');
+    }
   });
 
   action('diag-next', () => {
@@ -195,6 +242,9 @@ export function registerDiagnosticActions(rerender, navigate) {
       update((st) => { st.profile.diagnosticDone = true; });
       s.done = true;
       rerender();
+      // Диагностика пройдена целиком — это событие, а не просто экран.
+      cue('celebrate');
+      mascot.fire('celebrate');
       return;
     }
     s.asked.push(s.current.id);
@@ -204,6 +254,7 @@ export function registerDiagnosticActions(rerender, navigate) {
     s.startedAt = Date.now();
     if (!s.current) { s.done = true; update((st) => { st.profile.diagnosticDone = true; }); }
     rerender();
+    posture(s.current, getProfile().theta);
   });
 
   action('diag-skip', () => {

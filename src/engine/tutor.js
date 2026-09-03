@@ -9,7 +9,8 @@
  *    для сельских школ с нестабильной связью. Это и есть наш «edge-AI».
  *
  *  • Cloud-режим — тот же контекст (найденные темы, карта пробелов ученика,
- *    текущее задание) отправляется в Claude API одним промптом.
+ *    текущее задание) уходит на наш эндпоинт /api/tutor, а тот — в Gemini.
+ *    Ключ остаётся на сервере: сайт публичный, в браузер его класть нельзя.
  *
  * Главное правило политики: репетитор НИКОГДА не выдаёт готовый ответ на
  * задание, пока ученик не исчерпал лестницу подсказок. Он задаёт встречный
@@ -161,54 +162,97 @@ export function answerLocally(text, profile, ctx = {}, lang = 'ru') {
 const pick = (lang, map) => map[lang] || map.ru;
 
 /**
- * Cloud-режим: тот же контекст уходит в Claude API.
- * Ключ хранится только в localStorage браузера ученика и никуда не отправляется,
- * кроме самого API. При отсутствии ключа приложение молча работает офлайн.
+ * Облачный режим: тот же контекст уходит на наш эндпоинт /api/tutor.
+ *
+ * Ключ Gemini живёт в переменных окружения Vercel и в браузер не попадает —
+ * поэтому ученику больше нечего вводить и нечего терять. Раньше здесь был
+ * прямой вызов Claude API с ключом из localStorage: для публичного сайта это
+ * значило, что ключ видит любой, кто откроет devtools.
+ *
+ * Функция бросает исключение при любой неудаче — вызывающий код молча
+ * возвращается к разбору на устройстве. Это и есть страховка оффлайна:
+ * нет сети, нет ключа на сервере, упал провайдер — урок продолжается.
  */
-export async function answerWithClaude(text, profile, ctx, lang, apiKey) {
+export async function answerWithServer(text, profile, ctx, lang, history = []) {
   const hits = retrieve(text, lang);
   const L = (obj) => (obj && (obj[lang] || obj.ru)) || '';
-  const context = hits
-    .map((h) => `- ${L(h.topic)} (grade ${h.topic.grade}, mastery ${Math.round(masteryOf(profile, h.topic.id) * 100)}%): ${L(h.topic.summary)}`)
-    .join('\n');
 
-  const system = `Ты — школьный репетитор AQYL для учеников Казахстана (7–12 класс).
-Правила:
-1. Никогда не давай готовый ответ на текущее задание — задавай наводящий вопрос (метод Сократа).
-2. Отвечай на языке ученика: ${lang}.
-3. Опирайся только на темы из контекста ниже; если темы нет — скажи об этом.
-4. Коротко: максимум 5 предложений.
+  /* Модели отдаём не весь учебник, а два среза: темы по смыслу вопроса и
+     самые слабые темы ученика. Первое отвечает на «о чём спросили», второе —
+     на «что с этим учеником не так». Без второго совет получается общим. */
+  const weakest = TOPICS
+    .filter((tp) => (profile.subjects || ['math']).includes(tp.subject))
+    .map((tp) => ({ tp, pL: masteryOf(profile, tp.id) }))
+    .sort((a, b) => a.pL - b.pL)
+    .slice(0, 5);
 
-Карта знаний ученика:
-${context || '(релевантных тем не найдено)'}
-Класс: ${profile.grade}. Цель: ${profile.goal}. Уровень (theta): ${(profile.theta ?? 0).toFixed(2)}.
-${ctx.item ? `Ученик сейчас решает задание: "${L(ctx.item.stem)}"` : ''}`;
+  const seen = new Set();
+  const topics = [...hits.map((h) => h.topic), ...weakest.map((w) => w.tp)]
+    .filter((tp) => !seen.has(tp.id) && seen.add(tp.id))
+    .map((tp) => ({ id: tp.id, title: L(tp), mastery: masteryOf(profile, tp.id) }));
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  /* Срок ожидания на стороне клиента.
+     Продукт обещает работать на плохой связи, а значит не имеет права
+     молча ждать облако сколько угодно: разбор на устройстве уже посчитан и
+     готов. Двенадцать секунд — это чуть больше серверного срока (10 с),
+     чтобы в обычном случае ответ приходил с понятной причиной отказа, а не
+     обрывался здесь. */
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 12_000);
+
+  const res = await fetch('/api/tutor', {
     method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
+    signal: ctrl.signal,
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
-      model: 'claude-sonnet-5',
-      max_tokens: 600,
-      system,
-      messages: [{ role: 'user', content: text }],
+      message: text,
+      lang,
+      history: history.slice(-6).map((m) => ({ role: m.role, text: m.text })),
+      profile: {
+        theta: profile.theta ?? 0,
+        grade: profile.grade,
+        goal: profile.goal,
+        attempts: profile.attempts ?? 0,
+      },
+      topics,
+      currentItem: ctx.item ? L(ctx.item.stem) : null,
     }),
   });
-  if (!res.ok) throw new Error(`Claude API ${res.status}`);
+
+  clearTimeout(timer);
+
+  if (!res.ok) throw new Error(`tutor ${res.status}`);
   const data = await res.json();
+  if (!data || typeof data.text !== 'string') throw new Error('tutor: пустой ответ');
+
   return {
-    socratic: false,
-    text: data.content?.map((c) => c.text).join('') || '',
-    chips: hits[0]
-      ? [{ label: pick(lang, { ru: 'Практиковать', kk: 'Жаттығу', en: 'Practice' }), action: `learn:${hits[0].topic.id}` }]
-      : [],
+    socratic: data.intent === 'refuse_answer',
+    text: data.text,
+    chips: (data.actions || []).map(toChip).filter(Boolean),
     refs: hits.map((h) => h.topic.id),
+    source: 'cloud',
   };
+}
+
+/**
+ * Кнопка из структурированного действия модели.
+ *
+ * Схема ответа заставляет модель называть следующий шаг типом, а не прятать
+ * его в текст, — поэтому UI рисует настоящую кнопку и никогда не парсит прозу.
+ * Несуществующий topicId отбрасываем: модель может его выдумать, а ссылка
+ * в никуда хуже отсутствия кнопки.
+ */
+function toChip(a) {
+  if (!a || typeof a.label !== 'string' || !a.label.trim()) return null;
+  const label = a.label.slice(0, 40);
+  if (a.type === 'learn') {
+    return TOPIC_BY_ID[a.topicId] ? { label, action: `learn:${a.topicId}` } : null;
+  }
+  if (a.type === 'graph') return { label, action: 'graph' };
+  if (a.type === 'plan') return { label, action: 'plan' };
+  if (a.type === 'hint') return { label, action: 'hint' };
+  if (a.type === 'easier') return { label, action: 'easier' };
+  return null;
 }
 
 /**

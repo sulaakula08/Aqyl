@@ -1,8 +1,9 @@
 import { html, raw, action, md, toast } from './dom.js';
 import { icon } from './icons.js';
+import { mascot } from './mascot.js';
 import { t, tf, loc, lang } from '../i18n.js';
 import { getProfile, getSettings, update } from '../state.js';
-import { answerLocally, answerWithClaude } from '../engine/tutor.js';
+import { answerLocally, answerWithServer } from '../engine/tutor.js';
 import { getActiveItem } from './learn.js';
 import { TOPIC_BY_ID } from '../data/curriculum.js';
 
@@ -42,15 +43,18 @@ export function renderTutor() {
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <span class="pill ${s.cloudAI ? 'pill-strong' : 'pill-mastered'}">
-          ${raw(icon(s.cloudAI ? 'cloud' : 'bolt'))} ${s.cloudAI ? t('tutor.cloud') : t('tutor.offline')}
+          ${raw(icon(s.cloudAI ? 'cloud' : 'bolt'))} ${s.cloudAI ? t('tutor.modeAuto') : t('tutor.modeOffline')}
         </span>
         <button class="btn btn-ghost btn-sm" data-act="toggle-ai">${t('tutor.toggle')}</button>
+        <!-- Персонаж здесь не украшение: пока идёт запрос, он и есть индикатор
+             ожидания, а когда ответ пришёл — он его «произносит». -->
+        <div class="mascot-slot mascot-slot-inline" data-mascot="tutor" data-size="md"></div>
       </div>
     </div>
 
     <div class="panel chat">
       <div class="chat-log" id="chatLog">
-        ${raw(log.map(renderMsg).join(''))}
+        ${raw(log.map((m, i) => renderMsg(m, i)).join(''))}
         ${raw(busy ? '<div class="msg bot"><span class="typing"><i></i><i></i><i></i></span></div>' : '')}
       </div>
 
@@ -72,58 +76,161 @@ export function renderTutor() {
       <p style="font-size:.9rem;margin-top:10px">
         <strong style="color:var(--text)">${t('tutor.howCloudT')}</strong> ${t('tutor.howCloudB')}
       </p>
-      <div class="field" style="margin-top:16px">
-        <label for="apiKey">${t('tutor.keyLabel')}</label>
-        <input class="input" id="apiKey" type="password" placeholder="sk-ant-…" value="${getSettings().apiKey}" data-act="noop">
-        <button class="btn btn-sm" data-act="save-key" style="justify-self:start">${t('tutor.saveKey')}</button>
-      </div>
+      <p style="font-size:.85rem;margin-top:14px;color:var(--text-faint);border-top:1px solid var(--rule);padding-top:12px">
+        ${t('tutor.keyNote')}
+      </p>
     </div>
   </div>`;
 }
 
-function renderMsg(m) {
+function renderMsg(m, index = 0) {
   const refs = (m.refs || []).map((id) => TOPIC_BY_ID[id]).filter(Boolean);
+  /* Кнопка «прослушать» — не дубликат озвучки из экрана учёбы, а её место
+     здесь: разбор репетитора длиннее условия задачи, и именно его тяжелее
+     всего читать ученику с дислексией. Заодно это единственный путь, на
+     котором персонаж говорит вслух: сам он ничего не зачитывает. */
+  const listen = m.role === 'bot'
+    ? `<button class="icon-btn msg-say" data-act="tutor-say" data-i="${index}"
+               title="${t('common.listen')}" aria-label="${t('common.listen')}">${icon('sound', 15)}</button>`
+    : '';
   return `
     <div class="msg ${m.role} ${m.socratic ? 'socratic' : ''}">
+      ${listen}
       ${md(m.text).value}
       ${refs.length ? `<div class="chat-chips" style="margin-top:10px">
         ${refs.map((tp) => `<a class="pill" href="#/learn/${tp.id}">${loc(tp)} ${icon('arrowRight')}</a>`).join('')}
       </div>` : ''}
       ${(m.chips || []).length ? `<div class="chat-chips">
-        ${m.chips.map((c) => c.action.startsWith('learn:')
-          ? `<a class="btn btn-sm btn-accent" href="#/learn/${c.action.slice(6)}">${c.label}</a>`
-          : `<span class="pill">${c.label}</span>`).join('')}
+        ${m.chips.map(chipHtml).join('')}
       </div>` : ''}
     </div>`;
 }
 
+const CHIP_HREF = { graph: '#/graph', plan: '#/plan' };
+
+function chipHtml(c) {
+  if (c.action.startsWith('learn:')) {
+    return `<a class="btn btn-sm btn-accent" href="#/learn/${c.action.slice(6)}">${c.label}</a>`;
+  }
+  const href = CHIP_HREF[c.action];
+  if (href) return `<a class="btn btn-sm btn-accent" href="${href}">${c.label}</a>`;
+  // hint / easier осмысленны только внутри открытого задания.
+  const item = getActiveItem();
+  if (item && item.item) return `<a class="btn btn-sm" href="#/learn/${item.item.topic}">${c.label}</a>`;
+  return `<span class="pill">${c.label}</span>`;
+}
+
 async function ask(text, rerender) {
+  /* Защита от повторного входа.
+     Здесь была рекурсия, вешавшая вкладку: ask() перерисовывает экран до
+     запроса, а перерисовка на маршруте `#/tutor?q=…` заново заводила тот же
+     вопрос и снова вызывала ask(). Каждый виток добавлял ещё один запрос к
+     модели, и вкладка уходила в себя. Причину чиним ниже (адрес чистится в
+     flushPending), но вход в ask() обязан быть защищён сам по себе: это
+     функция, которая уходит в сеть, и она не может зависеть от того, кто и
+     сколько раз её позвал. */
+  if (busy) return;
+
   log.push({ role: 'me', text });
   busy = true;
   rerender();
   scrollDown();
+  // Пока идёт запрос, ожидание показывает персонаж, а не спиннер: ученик
+  // видит, что его вопрос обдумывают, а не что интерфейс подвис.
+  mascot.fire('think');
 
   const p = getProfile();
   const s = getSettings();
   // Контекст: если ученик оставил открытым задание, репетитор ведёт по нему.
   const ctx = getActiveItem() || {};
+  // История без только что добавленной реплики — её эндпоинт получает отдельно.
+  const history = log.slice(0, -1).filter((m) => m.role === 'me' || m.role === 'bot');
   let reply;
   try {
-    if (s.cloudAI && s.apiKey) {
-      reply = await answerWithClaude(text, p, ctx, lang(), s.apiKey);
+    if (s.cloudAI && navigator.onLine) {
+      reply = await answerWithServer(text, p, ctx, lang(), history);
     } else {
       // Небольшая пауза — чтобы ответ читался как диалог, а не как мгновенный дамп.
       await new Promise((r) => setTimeout(r, 320));
       reply = answerLocally(text, p, ctx, lang());
     }
   } catch (e) {
+    /* Падение облака — штатный сценарий, а не ошибка: ради него и построен
+       разбор на устройстве. Ученику показываем разбор и одну строку о том,
+       почему он локальный, — молчаливая подмена сбивала бы с толку. */
     reply = answerLocally(text, p, ctx, lang());
-    reply.text = tf('tutor.cloudFail', { e: e.message }) + '\n\n' + reply.text;
+    reply.text = t('tutor.cloudFail') + '\n\n' + reply.text;
   }
   log.push({ role: 'bot', ...reply });
   busy = false;
   rerender();
   scrollDown();
+
+  /* Ответ пришёл — персонаж «произносит» его беззвучно: клюв работает,
+     ученик читает. Вслух только по кнопке: класс, двадцать устройств. */
+  mascot.fire('idle');
+  typeOut(document.querySelector('.chat-log .msg.bot:last-of-type'), reply.text);
+}
+
+/**
+ * Ответ открывается слово за словом — ровно в том темпе, в котором персонаж
+ * его «произносит».
+ *
+ * Разница с обычным «эффектом печати» в том, что темп здесь не выдуман: слова
+ * приходят из того же источника, что и движение клюва (`mascot.say` →
+ * `speech.js`), а если ученик включит озвучку — из событий `boundary` самого
+ * синтезатора речи. Тогда слово появляется на экране ровно в тот момент,
+ * когда голос его произносит. Стена текста, возникающая мгновенно, читается
+ * как выгрузка из базы; текст, который кто-то говорит, читается как ответ.
+ *
+ * Скрытые слова заранее занимают своё место (opacity, а не display), поэтому
+ * абзац не прыгает и не пересобирается по мере появления.
+ */
+function typeOut(msgEl, text) {
+  if (!msgEl || mascot.calm()) { mascot.say(text, { aloud: false, bubble: false }); return; }
+
+  const words = [];
+  const walker = document.createTreeWalker(msgEl, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  let n;
+  while ((n = walker.nextNode())) {
+    // Кнопки-действия под ответом — не речь: их прятать нельзя.
+    if (!n.parentElement.closest('.chat-chips')) nodes.push(n);
+  }
+
+  nodes.forEach((node) => {
+    const frag = document.createDocumentFragment();
+    node.textContent.split(/(\s+)/).forEach((part) => {
+      if (!part) return;
+      if (!part.trim()) { frag.appendChild(document.createTextNode(part)); return; }
+      const span = document.createElement('span');
+      span.className = 'fx-word';
+      span.textContent = part;
+      frag.appendChild(span);
+      words.push(span);
+    });
+    node.parentNode.replaceChild(frag, node);
+  });
+
+  if (!words.length) return;
+
+  const showAll = () => words.forEach((w) => w.classList.add('on'));
+
+  mascot.say(text, {
+    aloud: false,
+    bubble: false,
+    onWord: (i) => {
+      // Открываем всё до текущего слова включительно: если событие речи
+      // где-то пропущено, текст не остаётся с дырой посередине.
+      for (let k = 0; k <= i && k < words.length; k++) words[k].classList.add('on');
+    },
+    onEnd: showAll,
+  });
+
+  /* Страховка. Персонаж мог замолчать раньше (ученик ушёл с экрана, речь
+     прервана) — текст ответа при этом обязан быть виден целиком. Скрытый
+     ответ репетитора хуже, чем ответ без анимации. */
+  setTimeout(showAll, Math.min(12_000, 900 + text.length * 26));
 }
 
 function scrollDown() {
@@ -144,27 +251,38 @@ export function registerTutorActions(rerender) {
 
   action('tutor-suggest', ({ q }) => { if (!busy) ask(q, rerender); });
 
+  action('tutor-say', ({ i }) => {
+    const m = log[Number(i)];
+    if (!m) return;
+    if (!getSettings().tts) return toast(t('learn.ttsOff'));
+    mascot.say(m.text, { aloud: true, bubble: false });
+  });
+
   action('toggle-ai', () => {
-    const s = getSettings();
-    if (!s.cloudAI && !s.apiKey) return toast(t('tutor.needKey'));
     update((st) => { st.settings.cloudAI = !st.settings.cloudAI; });
     toast(t(getSettings().cloudAI ? 'tutor.cloudOn' : 'tutor.offlineOn'));
     rerender();
   });
-
-  action('save-key', () => {
-    const el = document.getElementById('apiKey');
-    update((st) => { st.settings.apiKey = el.value.trim(); });
-    toast(t(el.value.trim() ? 'tutor.keySaved' : 'tutor.keyCleared'));
-  });
-
-  action('noop', () => {});
 }
 
-/** Вызывается роутером: вопрос, переданный из другой страницы через ?q=. */
+/**
+ * Вызывается роутером: вопрос, переданный из другой страницы через ?q=.
+ *
+ * Адрес чистится ДО запроса, и это главное здесь.
+ *
+ * Вопрос заводился из параметра `?q=` при каждой отрисовке экрана, а сама
+ * отрисовка происходит внутри ask(). Получалась воронка: ask() → перерисовка
+ * → снова тот же вопрос из адреса → ask() → … Вкладка зависала, а к модели
+ * уходил запрос на каждом витке — на слабом ноутбуке это выглядело как
+ * «репетитор грузится вечно», хотя на самом деле он отвечал на десяток
+ * копий одного вопроса.
+ *
+ * replaceState, а не переход: смена адреса не должна перезапускать роутер.
+ */
 export function flushPending(rerender) {
-  if (!pendingQuestion) return;
+  if (!pendingQuestion || busy) return;
   const q = pendingQuestion;
   pendingQuestion = null;
+  if (location.hash.includes('?q=')) history.replaceState(null, '', '#/tutor');
   ask(tf('tutor.explainTopic', { q }), rerender);
 }
