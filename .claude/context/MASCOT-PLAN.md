@@ -536,3 +536,35 @@ Only after everything above ships, and only if there is time and someone who can
 - Sound default: muted (my recommendation — it's a classroom) or on-with-a-prompt?
 - Is there anyone who can author Rive before the deadline? If yes, Phase 14 moves earlier and
   Phases 1–2 shrink to a fallback rig only.
+
+---
+
+## Scroll choreography — 2026-09-03
+
+The reveal layer was one fade-up for everything: `opacity 0 → 1`, `translateY(10px)`. That is the
+most common animation on the web and therefore invisible — the eye stopped registering it around
+2016. Replaced with roles, assigned in `motion.js` (`data-in`) and drawn in `motion.css`, each
+derived from what the content *is*:
+
+- **head** — the section heading *prints*: lines open bottom-to-top from under a clip, and the
+  eyebrow label's letter-spacing settles from 0.36em to its normal 0.14em. A typographic gesture,
+  for a typographic product, and one no template ships with.
+- **card** — rises, and a gold rule draws left-to-right along its top edge. Drawn as an animated
+  `background-size`, not a pseudo-element: `::after` on panels is already taken and switched off
+  by the cursor-spotlight layer (`.panel.spot::after { content: none }`), so an animation there
+  would simply never have existed. Note this leaves a permanent 2px accent rule on panels — a
+  static design change, not only motion.
+- **row** — plan weeks and risk rows slide in from the left; the list deals like cards.
+- **stat** — figures rise and start counting.
+- **chip** — small badges pop with overshoot. The only place overshoot belongs: the object is
+  small, and without it nobody notices it arrived.
+- **media** — the knowledge graph and heat map open with a wipe left-to-right, like unrolling a
+  sheet. The graph's edges then draw themselves (`animateGraph`), so the two motions read as one.
+
+Plus one **scroll-linked** (not scroll-triggered) touch: the graph SVG drifts with scroll position
+via `animation-timeline: view()`, under `@supports` and `prefers-reduced-motion: no-preference`.
+Content reveal is deliberately NOT built on scroll-driven animations — support is partial, and a
+browser without it would show an empty page. Here, no support means the graph simply sits still.
+
+Verified: 27 of 34 elements revealed above the fold on load, all 34 after scrolling, **zero stuck**
+on any of 11 routes, no horizontal overflow, no console errors.

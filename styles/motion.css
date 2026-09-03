@@ -25,6 +25,109 @@
 }
 [data-reveal].in { opacity: 1; transform: none; }
 
+/* ─── Роли появления ───────────────────────────────────────────────────────
+   Одинаковый «выезд снизу» для всего на свете — самая распространённая
+   анимация в вебе и ровно поэтому невидимая. Ниже у каждого типа содержимого
+   свой способ прийти, выведенный из того, чем это содержимое является.
+   Роли расставляет motion.js (data-in), а показывает по-прежнему класс .in —
+   то есть все страховки «контент не остаётся скрытым» продолжают работать.  */
+
+/* Заголовок раздела печатается: строки открываются снизу вверх из-под
+   обреза, а не проявляются. Обрез с запасом в 8 %, иначе тени и выносные
+   элементы букв срезаются по краям. */
+[data-in='head'] {
+  clip-path: inset(-8% -8% 100% -8%);
+  transform: translateY(6px);
+  transition:
+    opacity 0.36s var(--ease-out) var(--d, 0ms),
+    clip-path 0.62s var(--ease-out) var(--d, 0ms),
+    transform 0.62s var(--ease-out) var(--d, 0ms);
+}
+[data-in='head'].in { clip-path: inset(-8% -8% -8% -8%); transform: none; }
+
+/* Разрядка надзаголовка садится с широкой на штатную — жест, который
+   существует только в типографике и которого нет ни в одном шаблоне. */
+[data-in='head'] .label,
+[data-in='head'] .section-num {
+  letter-spacing: 0.36em;
+  transition: letter-spacing 0.75s var(--ease-out) calc(var(--d, 0ms) + 80ms);
+}
+[data-in='head'].in .label { letter-spacing: 0.14em; }
+[data-in='head'].in .section-num { letter-spacing: 0.08em; }
+
+/* Карточка приподнимается — и по её верхней кромке прочерчивается золотая
+   линейка: лист сначала разлиновывают, потом на нём пишут.
+
+   Линейка нарисована фоновым градиентом, у которого анимируется ширина, а не
+   псевдоэлементом. Причина конкретная: ::after у панелей уже занят — слой
+   подсветки курсором (.spot) отключает его через `content: none`, и любая
+   анимация там просто не существовала бы. Фон свободен, обходится в одно
+   свойство и не спорит ни с чем. */
+[data-in='card'] {
+  transform: translateY(16px) scale(0.992);
+  transition:
+    opacity 0.42s var(--ease-out) var(--d, 0ms),
+    transform 0.52s var(--ease-out) var(--d, 0ms);
+}
+[data-in='card'].in { transform: none; }
+
+.panel[data-in='card'],
+.demo-card[data-in='card'],
+.sim-card[data-in='card'] {
+  background-image: linear-gradient(90deg, var(--accent-bright), var(--accent-bright));
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 0 2px;
+  transition:
+    opacity 0.42s var(--ease-out) var(--d, 0ms),
+    transform 0.52s var(--ease-out) var(--d, 0ms),
+    background-size 0.6s var(--ease-out) calc(var(--d, 0ms) + 150ms);
+}
+
+.panel[data-in='card'].in,
+.demo-card[data-in='card'].in,
+.sim-card[data-in='card'].in { background-size: 100% 2px; }
+
+/* Строка списка въезжает слева: план и список рисков раздаются, как колода. */
+[data-in='row'] {
+  transform: translateX(-16px);
+  transition:
+    opacity 0.32s var(--ease-out) var(--d, 0ms),
+    transform 0.46s var(--ease-out) var(--d, 0ms);
+}
+[data-in='row'].in { transform: none; }
+
+/* Число приподнимается и тут же начинает досчитываться (countUp). */
+[data-in='stat'] {
+  transform: translateY(14px);
+  transition:
+    opacity 0.4s var(--ease-out) var(--d, 0ms),
+    transform 0.5s var(--ease-out) var(--d, 0ms);
+}
+[data-in='stat'].in { transform: none; }
+
+/* Мелкая плашка выскакивает с перелётом — единственное место, где он уместен:
+   объект маленький, и без перелёта его появление просто не заметно. */
+[data-in='chip'] {
+  transform: translateY(8px) scale(0.92);
+  transition:
+    opacity 0.28s var(--ease-out) var(--d, 0ms),
+    transform 0.44s cubic-bezier(0.2, 1.5, 0.4, 1) var(--d, 0ms);
+}
+[data-in='chip'].in { transform: none; }
+
+/* Граф и тепловая карта открываются шторкой слева направо — как
+   разворачивают лист. Рёбра графа после этого дочерчиваются сами
+   (animateGraph), и два движения складываются в одно связное. */
+[data-in='media'] {
+  clip-path: inset(0 100% 0 0);
+  transform: none;
+  transition:
+    opacity 0.24s var(--ease-out) var(--d, 0ms),
+    clip-path 0.72s var(--ease-out) var(--d, 0ms);
+}
+[data-in='media'].in { clip-path: inset(0 0 0 0); }
+
 /* Внутри уже открытого экрана приложения ждать прокрутки незачем —
    там всё видно сразу, и задержка читалась бы как подвисание. */
 .page [data-reveal] { transition-duration: 0.38s; }
@@ -225,6 +328,8 @@ a.pill { transition: transform 0.16s var(--ease-out), border-color 0.16s var(--e
     transition: none !important;
   }
   [data-reveal] { opacity: 1 !important; transform: none !important; }
+  [data-in] { clip-path: none !important; }
+  [data-in] .label, [data-in] .section-num { letter-spacing: 0.14em !important; }
 }
 
 
@@ -356,4 +461,29 @@ a.pill { transition: transform 0.16s var(--ease-out), border-color 0.16s var(--e
   .cine-bg { transition: none; }
   .cine:hover .cine-bg .cine-node { animation: none; }
   .marquee-track { transform: none !important; }
+}
+
+/* ─── Движение, привязанное к прокрутке ────────────────────────────────────
+   Всё выше — анимации, ЗАПУЩЕННЫЕ прокруткой: доехал до элемента, элемент
+   проиграл свои полсекунды. Здесь другое: движение, привязанное к положению
+   страницы. Граф едет не «по таймеру», а ровно настолько, насколько его
+   прокрутили, и от этого читается как слой в глубине, а не как эффект.
+
+   Живёт под @supports и только для графа. Причина принципиальная: scroll-
+   driven анимации поддержаны не везде, и вешать на них ПОЯВЛЕНИЕ содержимого
+   нельзя — в браузере без поддержки страница осталась бы пустой. Здесь же
+   отсутствие поддержки означает ровно одно: граф просто стоит на месте.   */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .graph-shell svg {
+      animation: graph-drift linear both;
+      animation-timeline: view();
+      animation-range: entry 0% exit 100%;
+    }
+  }
+}
+
+@keyframes graph-drift {
+  from { transform: translateY(16px); }
+  to   { transform: translateY(-16px); }
 }
