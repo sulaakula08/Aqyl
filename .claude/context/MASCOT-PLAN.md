@@ -640,3 +640,34 @@ structural guard for the whole product: `html, body { overflow-x: clip }` — `c
 
 Verified: fly the cause chain, then walk six routes — zero overflow everywhere, mascot seated
 exactly on its slot once the arrival animation ends, flight still departs and lands.
+
+---
+
+## Four reports from the laptop — 2026-09-03
+
+**1. The onboarding form could not be filled in — clicking a field jumped to the diagnostic.**
+Not the mascot this time (that was a separate, real problem, fixed earlier). The cause was in
+`dom.js`: the delegated click handler resolves `e.target.closest('[data-act]')`, and the form
+itself carries `data-act="onb-submit"`. So *every* click inside the form bubbled up, matched the
+form, and ran the submit handler — saving the profile and navigating away — while the
+`preventDefault()` on that same click suppressed the field's own behaviour. A form answers to
+`submit`, not to `click`; the handler now skips `FORM` elements. The submit event path was
+already wired separately, so the button still works. This also silently affected the tutor's
+chat form and the teacher's add-module form.
+
+**2. Giant buttons.** Also mine, and not a sizing problem: `.hero-cta` is a flex row, and I had
+put the mascot slot inside it. A flex row stretches its children to the tallest item, so a 108px
+bird made the two call-to-action buttons 108px tall. `align-items: center` restores them (172×39
+now). Separately, the whole button scale came down — `.btn` 11/20 → 8/15 padding, 0.92 → 0.86rem,
+radius 8px, `:active` presses in by 1.5%; `.choice` chips likewise.
+
+**3. The map trembled.** My scroll-linked graph drift. `.graph-shell` has `overflow-x: auto`, and
+per spec, once one axis is `auto` the other stops being `visible` and becomes `auto` too. Moving
+the SVG vertically created vertical overflow → a scrollbar appeared → the available width changed
+→ the drift recomputed → the scrollbar vanished. A feedback loop, at scroll rate. Removed rather
+than tuned: the map reads fine without parallax, and a trembling interface does not read at all.
+
+**4. The logo.** The old mark was a generic letter A in a rounded square. The А is now built from
+the product's own language — three nodes and three edges. It reads as a letter from across the
+room and as a knowledge graph up close, which is exactly what the platform is. Favicon and footer
+mark updated to match.

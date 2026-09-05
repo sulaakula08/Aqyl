@@ -46,6 +46,13 @@ export function initDelegation(root) {
   root.addEventListener('click', (e) => {
     const el = e.target.closest('[data-act]');
     if (!el) return;
+    /* Форма откликается на submit, а не на клик.
+       Без этой строки любой клик ВНУТРИ формы всплывал до неё, находил на ней
+       data-act и запускал отправку: щелчок по полю «Имя» сохранял анкету и
+       уносил ученика на диагностику, а preventDefault на том же клике гасил
+       обычное поведение поля. Форму нельзя заполнить, если каждое касание
+       её отправляет. */
+    if (el.tagName === 'FORM') return;
     const fn = handlers.get(el.dataset.act);
     if (fn) { e.preventDefault(); fn(el.dataset, el, e); }
   });
