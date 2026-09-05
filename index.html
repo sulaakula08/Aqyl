@@ -7,7 +7,7 @@
   <meta name="description" data-i18n-content="app.desc" content="AQYL находит настоящую причину пробела в знаниях школьника, строит персональный план подготовки и работает без интернета. Хакатон Future Minds 2026, трек Social Impact.">
   <meta name="theme-color" content="#faf8f4">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cg fill='none' stroke='%23e3ab41' stroke-width='2.6' stroke-linecap='round'%3E%3Cpath d='M21.7 9.3 18.3 12.9'/%3E%3Cpath d='M13.7 18.1 10.3 21.7'/%3E%3Ccircle cx='24' cy='7' r='3.2'/%3E%3Ccircle cx='16' cy='15.5' r='3.2'/%3E%3C/g%3E%3Ccircle cx='8' cy='24' r='4.4' fill='%23e3ab41'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M9.4 9.3L7.4 2.8l6.2 4.4z' fill='%23a86a00'/%3E%3Cpath d='M13.4 7.2L15.2 0.9l4.3 6.1z' fill='%23a86a00'/%3E%3Cpath d='M19.4 7.3L24.4 3.4l.3 5.4z' fill='%23a86a00'/%3E%3Cpath d='M16 6.2c-5.6 0-10 4-10.3 9.2C5.4 21.4 9.9 26.4 16 26.4s10.6-5 10.3-11c-.3-5.2-4.7-9.2-10.3-9.2z' fill='%23d9931a'/%3E%3Cg stroke='%23211b12' stroke-width='2.9' stroke-linecap='round' fill='none'%3E%3Cpath d='M8.7 12.6l5.2 2.1'/%3E%3Cpath d='M23.3 12.6l-5.2 2.1'/%3E%3C/g%3E%3Ccircle cx='11.7' cy='18' r='1.7' fill='%23211b12'/%3E%3Ccircle cx='20.3' cy='18' r='1.7' fill='%23211b12'/%3E%3Cpath d='M13.3 19.2h5.4c-.1 2.8-.8 4.8-2 5.9-.7.6-1.5.3-1.9-.5-.8-1.4-1.4-3.3-1.5-5.4z' fill='%23211b12'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles/tokens.css">
   <link rel="stylesheet" href="styles/app.css">
   <link rel="stylesheet" href="styles/motion.css">
@@ -20,13 +20,21 @@
     <div class="wrap topbar-inner">
       <a class="brand" href="#/" data-i18n-aria="app.brandHome" aria-label="AQYL — на главную">
         <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-          <g fill="none" stroke="var(--text)" stroke-width="2.4" stroke-linecap="round">
-            <path d="M21.7 9.3 18.3 12.9"/>
-            <path d="M13.7 18.1 10.3 21.7"/>
-            <circle cx="24" cy="7" r="3.2"/>
-            <circle cx="16" cy="15.5" r="3.2"/>
+          <!-- Хохолок: три пера разной высоты и со сдвигом. Ровный гребень из
+               одинаковых зубцов читался бы как корона из клипарта. -->
+          <path d="M9.4 9.3L7.4 2.8l6.2 4.4z" fill="var(--accent)"/>
+          <path d="M13.4 7.2L15.2 0.9l4.3 6.1z" fill="var(--accent)"/>
+          <path d="M19.4 7.3L24.4 3.4l.3 5.4z" fill="var(--accent)"/>
+          <!-- Голова шире внизу: тяжёлая нижняя челюсть отличает хищную птицу. -->
+          <path d="M16 6.2c-5.6 0-10 4-10.3 9.2C5.4 21.4 9.9 26.4 16 26.4s10.6-5 10.3-11c-.3-5.2-4.7-9.2-10.3-9.2z" fill="var(--accent-bright)"/>
+          <!-- Сведённые к центру дуги — единственная деталь, превращающая круг в беркута. -->
+          <g stroke="#211b12" stroke-width="2.9" stroke-linecap="round" fill="none">
+            <path d="M8.7 12.6l5.2 2.1"/><path d="M23.3 12.6l-5.2 2.1"/>
           </g>
-          <circle cx="8" cy="24" r="4.4" fill="var(--accent-bright)"/>
+          <circle cx="11.7" cy="18" r="1.7" fill="#211b12"/>
+          <circle cx="20.3" cy="18" r="1.7" fill="#211b12"/>
+          <!-- Клюв с крючком: прямой треугольник был бы воробьём. -->
+          <path d="M13.3 19.2h5.4c-.1 2.8-.8 4.8-2 5.9-.7.6-1.5.3-1.9-.5-.8-1.4-1.4-3.3-1.5-5.4z" fill="#211b12"/>
         </svg>
         <b>AQYL</b>
         <span aria-hidden="true">ақыл</span>
@@ -65,13 +73,21 @@
         <div>
           <div class="brand" style="margin-bottom:12px">
             <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-              <g fill="none" stroke="var(--text)" stroke-width="2.4" stroke-linecap="round">
-                <path d="M21.7 9.3 18.3 12.9"/>
-                <path d="M13.7 18.1 10.3 21.7"/>
-                <circle cx="24" cy="7" r="3.2"/>
-                <circle cx="16" cy="15.5" r="3.2"/>
+              <!-- Хохолок: три пера разной высоты и со сдвигом. Ровный гребень из
+                   одинаковых зубцов читался бы как корона из клипарта. -->
+              <path d="M9.4 9.3L7.4 2.8l6.2 4.4z" fill="var(--accent)"/>
+              <path d="M13.4 7.2L15.2 0.9l4.3 6.1z" fill="var(--accent)"/>
+              <path d="M19.4 7.3L24.4 3.4l.3 5.4z" fill="var(--accent)"/>
+              <!-- Голова шире внизу: тяжёлая нижняя челюсть отличает хищную птицу. -->
+              <path d="M16 6.2c-5.6 0-10 4-10.3 9.2C5.4 21.4 9.9 26.4 16 26.4s10.6-5 10.3-11c-.3-5.2-4.7-9.2-10.3-9.2z" fill="var(--accent-bright)"/>
+              <!-- Сведённые к центру дуги — единственная деталь, превращающая круг в беркута. -->
+              <g stroke="#211b12" stroke-width="2.9" stroke-linecap="round" fill="none">
+                <path d="M8.7 12.6l5.2 2.1"/><path d="M23.3 12.6l-5.2 2.1"/>
               </g>
-              <circle cx="8" cy="24" r="4.4" fill="var(--accent-bright)"/>
+              <circle cx="11.7" cy="18" r="1.7" fill="#211b12"/>
+              <circle cx="20.3" cy="18" r="1.7" fill="#211b12"/>
+              <!-- Клюв с крючком: прямой треугольник был бы воробьём. -->
+              <path d="M13.3 19.2h5.4c-.1 2.8-.8 4.8-2 5.9-.7.6-1.5.3-1.9-.5-.8-1.4-1.4-3.3-1.5-5.4z" fill="#211b12"/>
             </svg>
             <b>AQYL</b>
           </div>
