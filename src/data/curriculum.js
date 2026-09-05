@@ -521,8 +521,16 @@ ITEMS.push(
       const j = Math.floor(rnd() * (i + 1));
       [order[i], order[j]] = [order[j], order[i]];
     }
+    /* Где оказался «ошибочный» вариант.
+       Заданиям он известен по соглашению: сразу за верным ответом стоит тот,
+       который воплощает разобранное в `misconception` заблуждение — сложил
+       числители с числителями, сравнил дроби по числителю. После перестановки
+       эта позиция теряется, поэтому запоминаем её здесь: экран учёбы по ней
+       отличает рассуждавшего ученика от ткнувшего наугад и реагирует иначе. */
+    const missOriginal = original.findIndex((_, i) => i !== item.answer);
     item.options = order.map((i) => original[i]);
     item.answer = order.indexOf(item.answer);
+    item.missIndex = item.misconception ? order.indexOf(missOriginal) : -1;
   });
 })();
 

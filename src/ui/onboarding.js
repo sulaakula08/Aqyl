@@ -1,6 +1,8 @@
 import { html, raw, action, toast } from './dom.js';
 import { icon } from './icons.js';
-import { t, loc } from '../i18n.js';
+import { mascot } from './mascot.js';
+import { cue } from './sound.js';
+import { t, tf, loc } from '../i18n.js';
 import { getProfile, update } from '../state.js';
 import { SUBJECTS, GOALS } from '../data/curriculum.js';
 
@@ -20,6 +22,13 @@ export function renderOnboarding() {
         <h1 style="font-size:2rem;margin-top:14px">${t('onb.title')}</h1>
         <p style="margin-top:8px">${t('onb.lead')}</p>
       </div>
+      <!-- Персонаж сидит рядом с заголовком и никуда не летает.
+           Сначала он перелетал от поля к полю — и на ноутбуке садился прямо
+           на соседний ввод: события он не перехватывал, но поле закрывал,
+           и ученик не видел, что печатает. Анкета — плотная сетка полей, на
+           ней место персонажа фиксировано; вести за собой он будет там, где
+           для этого есть простор (экскурсия, карта знаний). -->
+      <div class="mascot-slot" data-mascot="onboarding" data-size="md"></div>
     </div>
 
     <form class="panel" data-act="onb-submit" id="onbForm">
@@ -78,11 +87,39 @@ export function renderOnboarding() {
       <button class="btn btn-primary btn-block" type="submit" style="margin-top:10px">
         ${t('cta.diagnostic')} →
       </button>
+
     </form>
   </div>`;
 }
 
+/**
+ * Реакции анкеты.
+ *
+ * Персонаж на анкете НЕ перелетает от поля к полю — он сидит в гнезде у
+ * заголовка. Летающий над плотной сеткой полей персонаж рано или поздно
+ * оказывается поверх соседнего ввода: клики он не перехватывает (слой не
+ * ловит события), но поле закрывает собой, и ученик перестаёт видеть, что
+ * набирает. Никакая геометрия расстановки этого не лечит — лечит решение
+ * не летать там, где у человека работа с полями.
+ *
+ * Остаётся то, что помогает и ничего не загораживает: кивок на каждый
+ * сделанный выбор и приветствие по имени.
+ */
+let greeted = false;
+
+function greetOnce(nameInput) {
+  const name = nameInput.value.trim();
+  if (!name || greeted) return;
+  greeted = true;
+  mascot.say(tf('mascot.greetName', { name }));
+  mascot.fire('nod');
+}
+
 export function registerOnboardingActions(navigate) {
+  document.addEventListener('change', (e) => {
+    if (e.target.id === 'f-name') greetOnce(e.target);
+  });
+
   action('toggle-subject', ({ id }, el) => {
     update((s) => {
       const list = s.profile.subjects;
@@ -91,11 +128,15 @@ export function registerOnboardingActions(navigate) {
       else if (i < 0) list.push(id);
     });
     el.classList.toggle('on', getProfile().subjects.includes(id));
+    mascot.fire('nod');
+    cue('hint');
   });
 
   action('pick-goal', ({ id }, el) => {
     update((s) => { s.profile.goal = id; });
     el.parentElement.querySelectorAll('.choice').forEach((c) => c.classList.toggle('on', c === el));
+    mascot.fire('nod');
+    cue('hint');
   });
 
   action('onb-submit', (_d, form) => {
@@ -111,6 +152,11 @@ export function registerOnboardingActions(navigate) {
       s.ui.onboarded = true;
     });
     toast(t('app.profileSaved'));
-    navigate('/diagnostic');
+    /* Персонаж уходит первым, экран меняется следом: так переход читается
+       как «он повёл меня дальше», а не как перезагрузка страницы. */
+    mascot.say(t('mascot.ready'));
+    mascot.fire('exit');
+    greeted = false;
+    setTimeout(() => navigate('/diagnostic'), mascot.calm() ? 0 : 420);
   });
 }

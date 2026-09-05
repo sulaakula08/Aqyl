@@ -1,5 +1,6 @@
 import { html, raw, action } from './dom.js';
 import { icon } from './icons.js';
+import { mascot } from './mascot.js';
 import { t, tf, loc, plt } from '../i18n.js';
 import { getProfile, update } from '../state.js';
 import { buildRoadmap, daysUntil } from '../engine/planner.js';
@@ -32,6 +33,7 @@ export function renderPlan() {
           ${t('plan.lead')}
         </p>
       </div>
+      <div class="mascot-slot" data-mascot="plan" data-size="md"></div>
     </div>
 
     <div class="grid g4" style="margin-bottom:20px">
@@ -103,6 +105,24 @@ export function renderPlan() {
 }
 
 export function registerPlanActions(rerender) {
-  action('plan-hours', ({ h }) => { weeklyHours = Number(h); rerender(); });
+  action('plan-hours', ({ h }) => { weeklyHours = Number(h); rerender(); mascot.fire('nod'); });
   action('plan-print', () => window.print());
+}
+
+/**
+ * Взгляд на календарь — один раз за визит.
+ *
+ * Персонаж тревожится за срок, а не подгоняет ученика: реакция срабатывает
+ * только когда до экзамена меньше месяца, и молчит, если даты нет вовсе.
+ * Постоянное напоминание о дедлайне — это тревожность, а не мотивация.
+ */
+let deadlineSeen = false;
+
+export function reactToDeadline() {
+  if (deadlineSeen || !mascot.enabled()) return;
+  deadlineSeen = true;
+  const days = daysUntil(getProfile().examDate);
+  if (days === null || days > 30 || days < 0) return;
+  mascot.fire('worried');
+  mascot.say(tf('mascot.examSoon', { n: days }));
 }

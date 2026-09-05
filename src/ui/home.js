@@ -1,6 +1,8 @@
 import { html, raw } from './dom.js';
 import { t } from '../i18n.js';
 import { getProfile } from '../state.js';
+import { TOPICS } from '../data/curriculum.js';
+import { loc } from '../i18n.js';
 
 /**
  * Первый экран показывает не абстрактную иллюстрацию, а реальный вывод
@@ -8,6 +10,43 @@ import { getProfile } from '../state.js';
  * что ученик увидит после диагностики, — поэтому обещание на главной и
  * содержание продукта совпадают.
  */
+/**
+ * Бегущая строка по учебной программе.
+ *
+ * Здесь напрашивались логотипы школ-партнёров — и именно поэтому их тут нет:
+ * партнёрств у продукта пока нет, а нарисованный ряд чужих гербов на главной
+ * — это заявление, которое рассыплется от первого вопроса. Вместо этого лента
+ * показывает то, что действительно есть: все темы, загруженные в граф знаний,
+ * с номером класса. Проверяемо и работает на ту же мысль — продукт наполнен.
+ */
+function curriculumMarquee() {
+  return raw(`
+    <div class="marquee" data-speed="0.42" aria-label="${t('home.mqAria')}">
+      <div class="marquee-track">
+        ${TOPICS.map((tp) => `
+          <span class="marquee-item">
+            ${loc(tp)}<span class="mq-grade">${tp.grade} ${t('common.grade')}</span>
+          </span>`).join('')}
+      </div>
+    </div>`);
+}
+
+/** Графовый мотив, проявляющийся под курсором. Рисуется, а не грузится. */
+function cineBg() {
+  const nodes = [
+    [18, 62], [34, 30], [52, 68], [70, 36], [86, 58], [46, 18], [64, 84],
+  ];
+  const edges = [[0, 1], [1, 2], [2, 3], [3, 4], [1, 5], [2, 6], [5, 3]];
+  return `
+    <div class="cine-bg" aria-hidden="true">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+        ${edges.map(([a, b]) =>
+          `<line class="cine-edge" x1="${nodes[a][0]}" y1="${nodes[a][1]}" x2="${nodes[b][0]}" y2="${nodes[b][1]}"/>`).join('')}
+        ${nodes.map(([x, y]) => `<circle class="cine-node" cx="${x}" cy="${y}" r="1.6"/>`).join('')}
+      </svg>
+    </div>`;
+}
+
 function diagnosisCard() {
   const steps = [
     { n: '3', band: 'gap', pct: 21, key: 'demo3' },
@@ -82,6 +121,9 @@ export function renderHome() {
               ${started ? t('cta.continue') : t('cta.diagnostic')}
             </a>
             <a class="btn btn-lg btn-ghost" href="#/method">${t('app.methodNav')}</a>
+            <!-- Персонаж встречает посетителя прямо у главной кнопки: это
+                 первое, что видит человек, открывший платформу впервые. -->
+            <div class="mascot-slot mascot-slot-inline" data-mascot="home" data-size="md"></div>
           </div>
 
           <div class="hero-meta">
@@ -105,6 +147,11 @@ export function renderHome() {
             <div class="fig-src">${t('home.' + f + 's')}</div>
           </div>`).join(''))}
       </div>
+    </section>
+
+    <!-- Что уже загружено в граф -->
+    <section class="wrap" style="padding-bottom:8px">
+      ${curriculumMarquee()}
     </section>
 
     <!-- 01 Проблема -->
@@ -213,7 +260,8 @@ export function renderHome() {
 
     <!-- Финальный призыв -->
     <section class="section wrap">
-      <div class="panel panel-accent" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;justify-content:space-between;padding:34px">
+      <div class="panel panel-accent cine" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;justify-content:space-between;padding:34px">
+        ${raw(cineBg())}
         <div>
           <h2 style="font-size:1.7rem;margin-bottom:8px">${t('home.finalH')}</h2>
           <p style="max-width:52ch">${t('home.finalP')}</p>

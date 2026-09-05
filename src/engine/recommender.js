@@ -90,6 +90,21 @@ export function rootCause(profile, topicId) {
 }
 
 /** Полная цепочка от первопричины к целевой теме — «маршрут восстановления». */
+/**
+ * Средняя освоенность по предметам ученика.
+ *
+ * Одно число, которым описывается «насколько он продвинулся в целом». Кабинет
+ * рисует им кольцо, талисман — собственный рост. Важно, что это ровно та же
+ * величина: персонаж не имеет права расти по своей отдельной шкале, иначе
+ * получилась бы вторая, ни на чём не основанная валюта прогресса.
+ */
+export function averageMastery(profile) {
+  const subjects = profile.subjects?.length ? profile.subjects : ['math'];
+  const topics = TOPICS.filter((t) => subjects.includes(t.subject));
+  if (!topics.length) return 0;
+  return topics.reduce((sum, t) => sum + masteryOf(profile, t.id), 0) / topics.length;
+}
+
 export function causeChain(profile, topicId) {
   const chain = [topicId];
   const guard = new Set([topicId]);

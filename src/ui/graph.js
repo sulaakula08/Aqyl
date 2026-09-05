@@ -1,8 +1,9 @@
 import { html, raw, action } from './dom.js';
 import { icon, iconGlyph } from './icons.js';
+import { mascot } from './mascot.js';
 import { t, tf, loc, plt } from '../i18n.js';
 import { getProfile } from '../state.js';
-import { masteryOf, causeChain, readinessOf } from '../engine/recommender.js';
+import { masteryOf, causeChain, readinessOf, recommend } from '../engine/recommender.js';
 import { masteryBand } from '../engine/mastery.js';
 import { TOPICS, TOPIC_BY_ID } from '../data/curriculum.js';
 
@@ -98,10 +99,19 @@ export function renderGraph() {
       const hl = highlight && highlight.has(pr) && highlight.has(t.id);
       const dim = highlight && !hl;
       const mx = (a.x + b.x) / 2;
-      return `<path class="gedge ${hl ? 'hl' : ''} ${dim ? 'gdim' : ''}"
+      return `<path class="gedge ${hl ? 'hl' : ''} ${dim ? 'gdim' : ''}" data-from="${pr}" data-to="${t.id}"
+                    marker-end="url(#gArrow)"
                     d="M${a.x + 20} ${a.y} C ${mx} ${a.y}, ${mx} ${b.y}, ${b.x - 20} ${b.y}"/>`;
     })
   ).join('');
+
+  /* Тема, которую движок советует взять следующей. Одна на всю карту — на
+     неё указывает пульсирующее кольцо, и это единственный ответ, за которым
+     ученик на самом деле сюда приходит: «с чего начать». */
+  const nextUp = recommend(p, 1)[0]?.topicId;
+
+  const RING = 16;                       // радиус кольца — один для всех
+  const CIRC = 2 * Math.PI * RING;       // длина окружности для дуги освоенности
 
   const nodes = topics.map((tp) => {
     const pL = masteryOf(p, tp.id);
@@ -110,18 +120,25 @@ export function renderGraph() {
     const isSel = selected === tp.id;
     const dim = highlight && !highlight.has(tp.id);
     const ready = readinessOf(p, tp.id);
-    const r = 11 + pL * 8;
     const label = loc(tp);
     const lines = wrapLabel(label);
+    /* Ядро растёт с освоенностью, но немного: основную величину теперь несёт
+       дуга кольца, а размер остаётся вторым, подсознательным сигналом. */
+    const core = 6.5 + pL * 3.5;
     return `
-      <g class="gnode ${isSel ? 'active' : ''} ${dim ? 'gdim' : ''}" data-act="graph-node" data-id="${tp.id}"
+      <g class="gnode ${isSel ? 'active' : ''} ${dim ? 'gdim' : ''} ${tp.id === nextUp ? 'gnext' : ''}"
+         data-act="graph-node" data-id="${tp.id}" style="--gd:${(Math.abs(c.x * 7 + c.y * 3) % 900)}ms"
          role="button" tabindex="0" aria-label="${label}">
-        <circle class="hit" cx="${c.x}" cy="${c.y}" r="22" fill="transparent"/>
-        <circle cx="${c.x}" cy="${c.y}" r="${r + 7}" fill="${BAND_COLOR[band]}" opacity="${isSel ? 0.28 : 0.1}"/>
-        <circle cx="${c.x}" cy="${c.y}" r="${r}" fill="${BAND_COLOR[band]}"
-                stroke="${isSel ? 'var(--text)' : 'transparent'}" stroke-width="2"/>
-        ${ready < 0.5 ? `<g class="glock">${iconGlyph('lock', c.x, c.y, 13)}</g>` : ''}
-        <text x="${c.x}" y="${c.y + r + 14}" text-anchor="middle">${
+        <circle class="hit" cx="${c.x}" cy="${c.y}" r="24" fill="transparent"/>
+        <circle class="ghalo" cx="${c.x}" cy="${c.y}" r="${RING + 5}" fill="${BAND_COLOR[band]}"/>
+        ${tp.id === nextUp ? `<circle class="gpulse" cx="${c.x}" cy="${c.y}" r="${RING}" fill="none" stroke="${BAND_COLOR[band]}"/>` : ''}
+        <circle class="gtrack" cx="${c.x}" cy="${c.y}" r="${RING}" fill="none"/>
+        <circle class="gring" cx="${c.x}" cy="${c.y}" r="${RING}" fill="none" stroke="${BAND_COLOR[band]}"
+                stroke-dasharray="${CIRC.toFixed(1)}" stroke-dashoffset="${(CIRC * (1 - pL)).toFixed(1)}"
+                transform="rotate(-90 ${c.x} ${c.y})"/>
+        <circle class="gcore" cx="${c.x}" cy="${c.y}" r="${core.toFixed(1)}" fill="${BAND_COLOR[band]}"/>
+        ${ready < 0.5 ? `<g class="glock">${iconGlyph('lock', c.x, c.y, 12)}</g>` : ''}
+        <text x="${c.x}" y="${c.y + RING + 16}" text-anchor="middle">${
           lines.map((ln, i) => `<tspan x="${c.x}" dy="${i ? 11 : 0}">${ln}</tspan>`).join('')
         }</text>
       </g>`;
@@ -143,6 +160,7 @@ export function renderGraph() {
         <h1 style="font-size:2rem;margin-top:14px">${t('graph.h1')}</h1>
         <p style="margin-top:6px;max-width:62ch">${t('graph.sub')} ${t('graph.sub2')}</p>
       </div>
+      <div class="mascot-slot" data-mascot="graph" data-size="md"></div>
     </div>
 
     <div class="grid g4" style="margin-bottom:18px">
@@ -155,6 +173,15 @@ export function renderGraph() {
     <div class="graph-shell">
       <svg viewBox="0 0 ${String(Math.round(width))} ${String(Math.round(height))}"
            preserveAspectRatio="xMidYMid meet" role="img" aria-label="${t('graph.aria')}">
+        <defs>
+          <!-- Направление связи — половина смысла графа: «эта тема держится
+               на той». Без наконечника линия читается как «они как-то
+               связаны», что неверно. -->
+          <marker id="gArrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="4.6" markerHeight="4.6"
+                  orient="auto-start-reverse" markerUnits="strokeWidth">
+            <path d="M0 0.6 L7.5 4 L0 7.4 z" fill="var(--rule-strong)"/>
+          </marker>
+        </defs>
         ${raw(edges)}
         ${raw(nodes)}
       </svg>
@@ -283,9 +310,141 @@ function nodePanel(p, tp) {
   </div>`;
 }
 
+/**
+ * Подсветка соседей под курсором.
+ *
+ * Карта из одиннадцати тем и четырнадцати связей глазом за раз не читается:
+ * все линии одинаковые, и понять, на чём держится конкретная тема, можно
+ * только водя пальцем. Наведение отвечает на этот вопрос мгновенно — тема,
+ * её связи и их вторые концы остаются в цвете, остальное уходит в фон.
+ *
+ * Слушатели делегированы на документ: карта перерисовывается на каждый
+ * выбор узла, и подписки на сами узлы после первой же перерисовки указывали
+ * бы в пустоту.
+ */
+let hoverBound = false;
+
+function clearHover(svg) {
+  svg.querySelectorAll('.gnear, .gfar').forEach((el) => el.classList.remove('gnear', 'gfar'));
+}
+
+function bindGraphHover() {
+  if (hoverBound) return;
+  hoverBound = true;
+
+  const enter = (e) => {
+    const svg = e.target.closest?.('.graph-shell svg');
+    if (!svg) return;
+    clearHover(svg);
+    const node = e.target.closest('.gnode');
+    if (!node) return;
+
+    const id = node.dataset.id;
+    const near = new Set([id]);
+    svg.querySelectorAll('.gedge').forEach((edge) => {
+      const { from, to } = edge.dataset;
+      if (from === id || to === id) { edge.classList.add('gnear'); near.add(from); near.add(to); }
+      else edge.classList.add('gfar');
+    });
+    svg.querySelectorAll('.gnode').forEach((n) => n.classList.add(near.has(n.dataset.id) ? 'gnear' : 'gfar'));
+  };
+
+  document.addEventListener('pointerover', enter);
+  document.addEventListener('focusin', enter);
+  document.addEventListener('pointerout', (e) => {
+    const svg = e.target.closest?.('.graph-shell svg');
+    // Уходим только когда курсор покинул карту целиком, а не перешёл на соседа.
+    if (svg && !svg.contains(e.relatedTarget)) clearHover(svg);
+  });
+}
+
 export function registerGraphActions(rerender) {
+  bindGraphHover();
+
   action('graph-node', ({ id }) => {
     selected = selected === id ? null : id;
     rerender();
+    if (!selected) return;
+
+    /* Реакция на выбранный узел — это и есть тезис продукта, показанный
+       телом: персонаж тревожится не за оценку, а за тему, на которой всё
+       сломалось. Освоенная тема получает спокойную гордость. */
+    const p = getProfile();
+    const pL = masteryOf(p, selected);
+    if (pL < 0.4) mascot.fire('worried');
+    else if (pL >= 0.85) mascot.fire('proud');
+    else mascot.fire('nod');
+
+    flyTheChain(p, selected);
   });
+}
+
+/**
+ * Персонаж пролетает цепочку причин прямо по карте.
+ *
+ * Это главное утверждение продукта, до сих пор существовавшее только текстом:
+ * «ты заваливаешь не эту тему, а ту, что под ней». Стрелочки в панели под
+ * графом объясняют это правильно и совершенно не убеждают — их не читают.
+ * Птица, которая срывается с выбранного узла и по одному спускается до
+ * самого нижнего, объясняет то же самое за две секунды и без единого слова.
+ *
+ * Порядок обратный тому, что отдаёт causeChain(): та возвращает цепочку от
+ * корня к симптому, а лететь нужно наоборот — от того, что ученик выбрал, к
+ * тому, что он не выбирал и о чём не подозревает. Направление здесь и есть
+ * содержание.
+ *
+ * Полёта нет, если цепочка из одного узла: лететь некуда, и «эффектная»
+ * анимация ради самой себя тут была бы враньём — она сообщала бы о находке,
+ * которой не было.
+ */
+function flyTheChain(profile, topicId) {
+  if (!mascot.enabled() || mascot.calm()) return;
+
+  const chain = causeChain(profile, topicId);
+  if (chain.length < 2) return;
+
+  const nodes = [...chain].reverse()
+    .map((id) => document.querySelector(`.gnode[data-id="${id}"]`))
+    .filter(Boolean);
+  if (nodes.length < 2) return;
+
+  /* Ток по ребру.
+     Персонаж не просто перелетает от узла к узлу — под ним по связи бежит
+     светящийся отрезок, ровно в те же полсекунды. Ребро графа перестаёт быть
+     линией на схеме и становится дорогой, по которой знание перетекает
+     снизу вверх. Смотреть на это можно бесконечно, а объясняет оно ту же
+     самую мысль: темы держатся друг на друге. */
+  const ids = [...chain].reverse();
+  ids.slice(0, -1).forEach((from, i) => {
+    setTimeout(() => sparkEdge(ids[i + 1], from), i * (520 + 380));
+  });
+
+  mascot.flyPath(nodes, {
+    size: 'sm',
+    step: 520,
+    hold: 380,
+    // На последнем узле — тревога: это и есть найденная причина.
+    onDone: () => mascot.fire('worried'),
+  });
+}
+
+/** Светящийся отрезок пробегает по ребру между двумя темами. */
+function sparkEdge(fromId, toId) {
+  const edge = document.querySelector(`.gedge[data-from="${fromId}"][data-to="${toId}"]`)
+    || document.querySelector(`.gedge[data-from="${toId}"][data-to="${fromId}"]`);
+  if (!edge) return;
+
+  const spark = edge.cloneNode();
+  spark.setAttribute('class', 'gedge gspark');
+  spark.removeAttribute('data-from');
+  spark.removeAttribute('data-to');
+  edge.parentNode.appendChild(spark);
+
+  const len = spark.getTotalLength();
+  const seg = Math.max(26, len * 0.22);
+  spark.style.strokeDasharray = `${seg} ${len}`;
+  spark.animate(
+    [{ strokeDashoffset: len }, { strokeDashoffset: -seg }],
+    { duration: 620, easing: 'cubic-bezier(.4,0,.5,1)' },
+  ).finished.catch(() => {}).then(() => spark.remove());
 }
